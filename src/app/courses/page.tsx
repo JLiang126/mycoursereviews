@@ -1,0 +1,77 @@
+import { sql } from 'drizzle-orm';
+
+import { db } from '@/db';
+import { reviews } from '@/db/schema';
+import { CoursesApiClient } from '@/lib/courses-api';
+import { BrowseCoursesClient } from '@/components/BrowseCoursesClient';
+
+// Ensure this page loads dynamic updates instantly
+export const dynamic = 'force-dynamic';
+
+/** Extract the subject prefix from a course code, e.g. "COMP SCI 1102" → "COMP SCI", "INFO3003" → "INFO" */
+function extractSubject(code: string): string {
+    const upper = code.trim().toUpperCase();
+    // Match leading letters (with optional spaces between word groups) before the first digit
+    const match = upper.match(/^([A-Z][A-Z\s]*?)\s*\d/);
+    return match ? match[1].trim() : upper;
+}
+
+export default async function CoursesPage() {
+    // 1. Fetch courses outline list from Redis-backed Courses API client
+    const apiCourses = await CoursesApiClient.getAllCourses();
+
+    // 2. Fetch course aggregate review stats from PostgreSQL
+    let dbStats: {
+        courseCode: string;
+        avgRating: number;
+        avgDifficulty: number;
+        avgUsefulness: number;
+        avgEnjoyment: number;
+        reviewCount: number;
+        mostRecentReview: string | null;
+    }[] = [];
+
+    try {
+        const stats = await db
+            .select({
+                courseCode: reviews.courseCode,
+                avgRating: sql<number>`avg(${reviews.overallRating})`,
+                avgDifficulty: sql<number>`avg(${reviews.difficultyScore})`,
+                avgUsefulness: sql<number>`avg(${reviews.usefulnessScore})`,
+                avgEnjoyment: sql<number>`avg(${reviews.enjoymentScore})`,
+                reviewCount: sql<number>`count(${reviews.id})`,
+                mostRecentReview: sql<string>`max(${reviews.createdAt})`,
+            })
+            .from(reviews)
+            .groupBy(reviews.courseCode);
+
+        dbStats = stats.map((row) => ({
+            courseCode: row.courseCode,
+            avgRating: Number(row.avgRating) || 0,
+            avgDifficulty: Number(row.avgDifficulty) || 0,
+            avgUsefulness: Number(row.avgUsefulness) || 0,
+            avgEnjoyment: Number(row.avgEnjoyment) || 0,
+            reviewCount: Number(row.reviewCount) || 0,
+            mostRecentReview: row.mostRecentReview ?? null,
+        }));
+    } catch (error) {
+        console.error('Error fetching course DB statistics:', error);
+    }
+
+    // 3. Map aggregates onto API courses list
+    const coursesWithStats = apiCourses.map((course) => {
+        const stat = dbStats.find((s) => s.courseCode.toLowerCase() === course.code.toLowerCase());
+        return {
+            ...course,
+            subject: extractSubject(course.code),
+            avgRating: stat?.avgRating ?? 0,
+            avgDifficulty: stat?.avgDifficulty ?? 0,
+            avgUsefulness: stat?.avgUsefulness ?? 0,
+            avgEnjoyment: stat?.avgEnjoyment ?? 0,
+            reviewCount: stat?.reviewCount ?? 0,
+            mostRecentReview: stat?.mostRecentReview ?? null,
+        };
+    });
+
+    return <BrowseCoursesClient courses={coursesWithStats} />;
+}
