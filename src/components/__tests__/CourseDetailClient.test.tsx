@@ -17,7 +17,6 @@ jest.mock('@/app/actions/reviews', () => ({
 // Mock @heroui/react Modal components to render as standard divs, avoiding complex framer-motion overlays in Jest jsdom
 jest.mock('@heroui/react', () => {
     const original = jest.requireActual('@heroui/react');
-    const React = require('react');
     return {
         ...original,
         Modal: ({ children, isOpen }: any) => isOpen ? <div data-testid="mock-modal">{children}</div> : null,

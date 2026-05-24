@@ -275,8 +275,8 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                         </div>
                     </div>
 
-                    {/* Quick-info pills: coordinator, campus, units, level */}
-                    {(course.coordinator || course.campus || course.units || course.levelOfStudy) && (
+                    {/* Quick-info pills: coordinator, campus, units, level, elective */}
+                    {(course.coordinator || course.campus || course.units || course.levelOfStudy || course.universityWideElective) && (
                         <div className="flex flex-wrap gap-2">
                             {course.coordinator && (
                                 <div className="flex items-center gap-1.5 text-xs font-semibold bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full">
@@ -300,6 +300,12 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                                 <div className="flex items-center gap-1.5 text-xs font-semibold bg-secondary/10 text-secondary border border-secondary/20 px-3 py-1 rounded-full">
                                     <FaGraduationCap className="text-xs" />
                                     {course.levelOfStudy}
+                                </div>
+                            )}
+                            {course.universityWideElective && (
+                                <div className="flex items-center gap-1.5 text-xs font-semibold bg-success/10 text-success border border-success/20 px-3 py-1 rounded-full">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                                    University-Wide Elective
                                 </div>
                             )}
                         </div>

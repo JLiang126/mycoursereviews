@@ -28,6 +28,8 @@ export interface CourseData {
     learningOutcomes?: Array<{ description: string; outcomeIndex: number }>;
     textbooks?: string | null;
     subjectName?: string | null;
+    apiId?: string | null;
+    universityWideElective?: boolean | null;
 }
 
 // Robust fallback course mocks for developer ease & server safety
@@ -108,26 +110,44 @@ function getSubjectNameFromCodePrefix(codePrefix: string): string | null {
 
 export const CoursesApiClient = {
     /**
-     * Retrieves all Adelaide University courses by first fetching the full
-     * subjects list from the API, then querying every subject × term.
-     * Results cached in Redis for 24 hours.
+     * Retrieves the entire list of Adelaide University courses by querying
+     * the Courses API endpoints with required parameters.
+     * Respects 24-hour cache limit in Redis.
      */
     async getAllCourses(): Promise<CourseData[]> {
         const cacheKey = 'courses:all';
 
         try {
+            // Check Redis Cache
             const cachedData = await redis.get(cacheKey);
-            if (cachedData) return JSON.parse(cachedData) as CourseData[];
+            if (cachedData) {
+                return JSON.parse(cachedData) as CourseData[];
+            }
         } catch (error) {
             console.error('Redis cache lookup error:', error);
         }
 
         const headers = {
             'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (compatible; MyCourseReviews/1.0)',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         };
 
-        const year = new Date().getFullYear();
+        // Standard subjects, terms, and year to fetch from the Adelaide University API
+        const year = 2026;
+        const defaultTargetSubjects = [
+            'Computer Science',
+            'Mathematical Sciences',
+            'Statistics',
+            'Electric/Electronic Eng & Tech',
+            'Information Systems',
+            'Artificial Intelligence',
+            'Computer Graphics',
+            'Project Management',
+        ];
+
+        let subjects = [...defaultTargetSubjects];
+
+        // Adelaide University term alias mapping (compsci-adl TERMS standard)
         const termQueries = [
             { alias: 'sem1', displayName: 'Semester 1' },
             { alias: 'sem2', displayName: 'Semester 2' },
@@ -135,290 +155,322 @@ export const CoursesApiClient = {
             { alias: 'winter', displayName: 'Winter' },
         ];
 
-        // Step 1: Fetch the complete subjects list from the API
-        let subjects: string[] = [];
-        try {
-            const subjectsUrl = `${env.COURSES_API_URL}/subjects?year=${year}&term=sem1`;
-            const subjectsResponse = await fetch(subjectsUrl, { headers, next: { revalidate: 86400 } });
-            if (subjectsResponse.ok) {
-                const rawSubjects = await subjectsResponse.json() as Array<string | { code: string; name: string }>;
-                subjects = rawSubjects
-                    .map(s => (typeof s === 'string' ? s : (s.name || s.code || '')))
-                    .filter(Boolean);
-                console.log(`[CoursesAPI] Fetched ${subjects.length} subjects.`);
-            }
-        } catch (err) {
-            console.warn('[CoursesAPI] Failed to fetch subjects list:', err);
-        }
-
-        if (subjects.length === 0) {
-            console.warn('[CoursesAPI] No subjects returned; using fallbacks.');
-            return FALLBACK_COURSES;
-        }
-
-        // Step 2: Fetch courses for every subject × every term
         const coursesMap = new Map<string, CourseData>();
 
-        for (const subject of subjects) {
-            for (const termQuery of termQueries) {
-                try {
-                    const searchParams = new URLSearchParams({
-                        year: String(year),
-                        term: termQuery.alias,
-                        subject,
-                    });
-                    const url = `${env.COURSES_API_URL}/courses?${searchParams.toString()}`;
-                    const response = await fetch(url, { headers, next: { revalidate: 86400 } });
-                    if (!response.ok) continue;
+        console.log('Fetching course list from external Courses API...');
 
-                    const resJson = await response.json();
-                    const rawCourses: Array<{ id: string; name?: { subject?: string; code?: string; title?: string } }> = resJson?.courses || [];
+        try {
+            // Query subjects endpoint first to match and normalize dynamic outlines
+            try {
+                const subjectsUrl = `${env.COURSES_API_URL}/subjects?year=${year}&term=sem1`;
+                const subjectsResponse = await fetch(subjectsUrl, { headers, next: { revalidate: 86400 } });
+                if (subjectsResponse.ok) {
+                    const rawSubjects = await subjectsResponse.json() as Array<string | { code: string; name: string }>;
+                    const fetchedList = rawSubjects.map(s => {
+                        if (typeof s === 'string') return s;
+                        return s.name || s.code || '';
+                    }).filter(Boolean);
 
-                    for (const raw of rawCourses) {
-                        if (!raw.name) continue;
-                        const fullSubjectName = raw.name.subject || subject;
-                        const catalogCode = raw.name.code || '';
-                        const title = raw.name.title || '';
-                        if (!catalogCode) continue;
-
-                        // Use catalog code as-is when it already contains letters+digits (ARTI2001, INFO3003)
-                        // Otherwise prefix with subject abbreviation (COMP SCI 1102)
-                        let code: string;
-                        if (/[A-Za-z]/.test(catalogCode) && /\d/.test(catalogCode)) {
-                            code = catalogCode.trim();
-                        } else {
-                            code = `${getSubjectAbbreviation(fullSubjectName)} ${catalogCode}`.trim();
-                        }
-
-                        const normalizedCode = code.toUpperCase();
-                        const displayTerm = termQuery.displayName;
-
-                        if (coursesMap.has(normalizedCode)) {
-                            const existing = coursesMap.get(normalizedCode)!;
-                            if (!existing.terms.includes(displayTerm)) existing.terms.push(displayTerm);
-                        } else {
-                            coursesMap.set(normalizedCode, {
-                                code,
-                                name: title || code,
-                                description: '', // fetched on demand on detail page
-                                terms: [displayTerm],
-                                officialLink: `https://www.adelaide.edu.au/course-outlines/${raw.id || encodeURIComponent(normalizedCode)}`,
-                                subjectName: fullSubjectName, // full name e.g. "Artificial Intelligence"
-                            });
-                        }
+                    if (fetchedList.length > 0) {
+                        subjects = fetchedList;
                     }
-                } catch (err) {
-                    console.warn(`[CoursesAPI] Failed fetch: subject=${subject}, term=${termQuery.alias}`, err);
+                }
+            } catch (subjectsError) {
+                console.warn('Failed to query dynamic subjects list, using default lists:', subjectsError);
+            }
+
+            // Create flat list of query tasks to fetch
+            const tasks: Array<{ subject: string; termQuery: typeof termQueries[0] }> = [];
+            for (const subject of subjects) {
+                for (const termQuery of termQueries) {
+                    tasks.push({ subject, termQuery });
                 }
             }
-        }
 
-        if (coursesMap.size > 0) {
-            const data = Array.from(coursesMap.values());
-            try {
-                await redis.set(cacheKey, JSON.stringify(data), 'EX', 86400);
-            } catch (redisErr) {
-                console.warn('[CoursesAPI] Redis set failed:', redisErr);
+            // Execute fetches in parallel batches of 25 to protect backend & prevent client bottlenecks
+            const batchSize = 25;
+            for (let i = 0; i < tasks.length; i += batchSize) {
+                const chunk = tasks.slice(i, i + batchSize);
+                await Promise.all(
+                    chunk.map(async (task) => {
+                        try {
+                            const searchParams = new URLSearchParams({
+                                year: String(year),
+                                term: task.termQuery.alias,
+                                subject: task.subject,
+                            });
+
+                            const url = `${env.COURSES_API_URL}/courses?${searchParams.toString()}`;
+                            const response = await fetch(url, { headers, next: { revalidate: 86400 } });
+
+                            if (response.ok) {
+                                const resJson = await response.json();
+                                const rawCourses = resJson?.courses || [];
+
+                                for (const raw of rawCourses) {
+                                    if (!raw.name) continue;
+                                    const sub = raw.name.subject || task.subject;
+                                    const catalogCode = raw.name.code || '';
+                                    const title = raw.name.title || '';
+
+                                    // Map full subject names dynamically to standard Adelaide Uni abbreviations
+                                    const mappedSub = getSubjectAbbreviation(sub);
+
+                                    // Resolve course codes intelligently:
+                                    // If the catalog code already contains letters (e.g., ARTI2001), it represents the 
+                                    // full course code and doesn't need to be prefixed by the subject abbreviation.
+                                    // Otherwise, we prefix it (e.g., COMP SCI 1102).
+                                    let code = '';
+                                    if (/[A-Za-z]/.test(catalogCode)) {
+                                        code = catalogCode.replace(/_/g, ' ').trim();
+                                    } else {
+                                        code = `${mappedSub} ${catalogCode}`.trim();
+                                    }
+
+                                    if (!code) continue;
+                                    const normalizedCode = code.toUpperCase();
+
+                                    // Construct readable, pretty term lists
+                                    const displayTerm = task.termQuery.displayName;
+
+                                    if (coursesMap.has(normalizedCode)) {
+                                        const existing = coursesMap.get(normalizedCode)!;
+                                        if (!existing.terms.includes(displayTerm)) {
+                                            existing.terms.push(displayTerm);
+                                        }
+                                    } else {
+                                        coursesMap.set(normalizedCode, {
+                                            code: code,
+                                            name: title || code,
+                                            description: `Official Adelaide University outline for ${code} (${title || 'Course Outline'}).`,
+                                            terms: [displayTerm],
+                                            officialLink: `https://www.adelaide.edu.au/course-outlines/${raw.id || encodeURIComponent(normalizedCode)}`,
+                                            subjectName: sub || null,
+                                            apiId: raw.id || null,
+                                        });
+                                    }
+                                }
+                            }
+                        } catch (innerError) {
+                            console.warn(`Failed to fetch for subject: ${task.subject}, term alias: ${task.termQuery.alias}. Error:`, innerError);
+                        }
+                    })
+                );
             }
-            return data;
+
+            if (coursesMap.size > 0) {
+                const data = Array.from(coursesMap.values());
+
+                // Write into Redis (24-hour TTL)
+                await redis.set(cacheKey, JSON.stringify(data), 'EX', 86400);
+                return data;
+            } else {
+                console.warn('Courses API returned 0 courses. Using fallback outlines.');
+            }
+        } catch (error) {
+            console.error('Failed to fetch from Courses API, using fallbacks:', error);
         }
 
-        console.warn('[CoursesAPI] Courses API returned 0 courses; using fallbacks.');
+        // Return fallback data if service is offline/unreachable
         return FALLBACK_COURSES;
     },
 
     /**
-     * Retrieves full detail for a single course by its display code (e.g. "ARTI2001", "COMP SCI 1102").
-     * Two-tier subject search: known prefix map → full subjects scan.
-     * Cached in Redis for 24 hours.
+     * Retrieves detailed information on a single course dynamically.
      */
     async getCourseByCode(code: string): Promise<CourseData | null> {
         const cacheKey = `course:${code}`;
 
         try {
+            // Check Redis Cache
             const cachedData = await redis.get(cacheKey);
-            if (cachedData) return JSON.parse(cachedData) as CourseData;
+            if (cachedData) {
+                return JSON.parse(cachedData) as CourseData;
+            }
         } catch (error) {
-            console.error('[CoursesAPI] Redis single-course lookup error:', error);
+            console.error('Redis cache single lookup error:', error);
         }
 
         const headers = {
             'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (compatible; MyCourseReviews/1.0)',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         };
 
-        const year = new Date().getFullYear();
+        const year = 2026;
         const termQueries = ['sem1', 'sem2', 'summer', 'winter'];
 
+        // Step 1: Determine subject name from code prefix.
         const codeUpper = code.trim().toUpperCase();
+        // Match everything before the trailing numeric part
+        const prefixMatch = codeUpper.match(/^([A-Z][A-Z\s]*?)\s*\d/);
+        const codePrefix = prefixMatch ? prefixMatch[1].trim() : codeUpper;
 
-        // Extract the catalog code (e.g. "ARTI2001" from "ARTI2001" or "1102" from "COMP SCI 1102")
+        // Also extract just the numeric+letter catalog code (e.g. "INFO3003" -> "INFO3003", "COMP SCI 1102" -> "1102")
         const catalogCodeMatch = codeUpper.match(/([A-Z]+\d+\w*)$/);
         const catalogCode = catalogCodeMatch ? catalogCodeMatch[1] : codeUpper;
 
-        // Extract the alphabetic prefix (e.g. "COMP SCI", "INFO", "ARTI") for fast-path lookup
-        const prefixMatch = codeUpper.match(/^([A-Z][A-Z\s]*?)\s*\d/);
-        const codePrefix = prefixMatch ? prefixMatch[1].trim() : '';
+        let subjectName = getSubjectNameFromCodePrefix(codePrefix);
+        let apiId: string | null = null;
 
-        /**
-         * Searches one subject across all term aliases for the given catalog code.
-         * On match: fetches detail, builds and caches the full CourseData, returns it.
-         */
-        const searchSubject = async (subject: string): Promise<CourseData | null> => {
-            for (const term of termQueries) {
-                try {
-                    const searchParams = new URLSearchParams({ year: String(year), term, subject });
-                    const searchUrl = `${env.COURSES_API_URL}/courses?${searchParams.toString()}`;
-                    const searchResponse = await fetch(searchUrl, { headers, next: { revalidate: 86400 } });
-                    if (!searchResponse.ok) continue;
-
-                    const resJson = await searchResponse.json();
-                    const rawCourses: Array<{ id: string; name?: { subject?: string; code?: string; title?: string } }> = resJson?.courses || [];
-
-                    const match = rawCourses.find(c => {
-                        const apiCode = (c?.name?.code || '').toUpperCase().replace(/\s+/g, '');
-                        return apiCode === catalogCode.replace(/\s+/g, '');
-                    });
-
-                    if (!match) continue;
-
-                    // Found — now fetch full detail by the API's opaque id
-                    const apiId = match.id;
-                    const fullSubjectName = match.name?.subject || subject;
-                    const matchCode = match.name?.code || catalogCode;
-                    const matchTitle = match.name?.title || code;
-
-                    let detail: Record<string, unknown> = {};
-                    try {
-                        const detailResponse = await fetch(`${env.COURSES_API_URL}/courses/${apiId}`, {
-                            headers,
-                            next: { revalidate: 86400 },
-                        });
-                        if (detailResponse.ok) detail = await detailResponse.json();
-                    } catch (detailErr) {
-                        console.warn(`[CoursesAPI] Detail fetch failed for id ${apiId}:`, detailErr);
-                    }
-
-                    // Build display code
-                    let normalizedCode: string;
-                    if (/[A-Za-z]/.test(matchCode) && /\d/.test(matchCode)) {
-                        normalizedCode = matchCode;
-                    } else {
-                        normalizedCode = `${getSubjectAbbreviation(fullSubjectName)} ${matchCode}`.trim();
-                    }
-
-                    // Parse terms from detail — API returns "Semester 1,Semester 2" as a string
-                    let termNames: string[];
-                    const rawTermStr = detail?.term as string | undefined;
-                    if (rawTermStr) {
-                        termNames = rawTermStr.split(',').map(t => t.trim()).filter(Boolean);
-                    } else if (Array.isArray(detail?.terms)) {
-                        termNames = (detail.terms as string[]).map(t => t.replace(' School', ''));
-                    } else {
-                        termNames = [term === 'sem1' ? 'Semester 1' : term === 'sem2' ? 'Semester 2' : term.charAt(0).toUpperCase() + term.slice(1)];
-                    }
-
-                    const description = (detail?.course_overview as string) || (detail?.description as string) || '';
-
-                    const officialLink =
-                        (detail?.course_outline_url as string) ||
-                        (detail?.course_url as string) ||
-                        `https://www.adelaide.edu.au/course-outlines/${apiId}`;
-
-                    type RawAssessment = { title?: string; weighting?: string; hurdle?: string };
-                    const rawAssessments = Array.isArray(detail?.assessments) ? (detail.assessments as RawAssessment[]) : [];
-                    const assessments = rawAssessments.map(a => ({
-                        title: a.title ?? '',
-                        weighting: a.weighting ?? '',
-                        hurdle: a.hurdle ?? '',
-                    }));
-
-                    type RawOutcome = { description?: string; outcome_index?: number };
-                    const rawOutcomes = Array.isArray(detail?.learning_outcomes) ? (detail.learning_outcomes as RawOutcome[]) : [];
-                    const learningOutcomes = rawOutcomes.map(o => ({
-                        description: o.description ?? '',
-                        outcomeIndex: o.outcome_index ?? 0,
-                    }));
-
-                    const reqs = detail?.requirements as Record<string, string | null> | undefined;
-                    const detailName = detail?.name as { subject?: string } | undefined;
-                    const resolvedSubjectName = detailName?.subject || fullSubjectName || null;
-
-                    const data: CourseData = {
-                        code: normalizedCode,
-                        name: matchTitle,
-                        description,
-                        terms: termNames,
-                        officialLink,
-                        coordinator: (detail?.course_coordinator as string) || null,
-                        campus: (detail?.campus as string) || null,
-                        units: (detail?.units as number) || null,
-                        levelOfStudy: (detail?.level_of_study as string) || null,
-                        prerequisites: reqs?.prerequisites ?? null,
-                        corequisites: reqs?.corequisites ?? null,
-                        antirequisites: reqs?.antirequisites ?? null,
-                        assessments: assessments.length > 0 ? assessments : undefined,
-                        learningOutcomes: learningOutcomes.length > 0 ? learningOutcomes : undefined,
-                        textbooks: (detail?.textbooks as string) || null,
-                        subjectName: resolvedSubjectName,
-                    };
-
-                    try {
-                        await redis.set(cacheKey, JSON.stringify(data), 'EX', 86400);
-                    } catch (_) { /* ignore */ }
-
-                    return data;
-                } catch (err) {
-                    console.warn(`[CoursesAPI] Search error: code=${code}, subject=${subject}, term=${term}`, err);
+        // Dynamic fallback: look up the course in all courses list to resolve its subjectName and apiId
+        try {
+            const allCourses = await this.getAllCourses();
+            const matchedCourse = allCourses.find((c) => c.code.toLowerCase() === code.toLowerCase());
+            if (matchedCourse) {
+                if (matchedCourse.subjectName) {
+                    subjectName = matchedCourse.subjectName;
+                }
+                if (matchedCourse.apiId) {
+                    apiId = matchedCourse.apiId;
                 }
             }
-            return null;
+        } catch (err) {
+            console.warn('Failed to dynamically resolve course details from allCourses list:', err);
+        }
+
+        // Common mapping function for course detail
+        const buildCourseFromDetail = (detail: any, fallbackId: string, matchedTitle: string, matchedSubject: string, matchedCode: string): CourseData => {
+            // Build normalized code: if the catalog code already contains letters use it as-is
+            let normalizedCode: string;
+            if (/[A-Za-z]/.test(matchedCode) && /\d/.test(matchedCode)) {
+                normalizedCode = matchedCode;
+            } else {
+                normalizedCode = `${getSubjectAbbreviation(matchedSubject)} ${matchedCode}`.trim();
+            }
+
+            const description =
+                detail?.course_overview ||
+                detail?.description ||
+                detail?.outline ||
+                `Official Adelaide University outline for ${normalizedCode} (${matchedTitle}).`;
+
+            const rawTerms = Array.isArray(detail?.terms) ? detail.terms : [];
+            const termNames = rawTerms.length > 0
+                ? rawTerms.map((t: string) => t.replace(' School', ''))
+                : ['Semester 1', 'Semester 2'];
+
+            const officialLink =
+                detail?.course_outline_url ||
+                detail?.course_url ||
+                detail?.officialLink ||
+                detail?.link ||
+                `https://www.adelaide.edu.au/course-outlines/${fallbackId}`;
+
+            // Map assessments (title, weighting, hurdle)
+            const rawAssessments = Array.isArray(detail?.assessments) ? detail.assessments : [];
+            const assessments = rawAssessments.map((a: any) => ({
+                title: a.title ?? '',
+                weighting: a.weighting ?? '',
+                hurdle: a.hurdle ?? '',
+            }));
+
+            // Map learning outcomes (description, outcome_index -> outcomeIndex)
+            const rawOutcomes = Array.isArray(detail?.learning_outcomes) ? detail.learning_outcomes : [];
+            const learningOutcomes = rawOutcomes.map((o: any) => ({
+                description: o.description ?? '',
+                outcomeIndex: o.outcome_index ?? 0,
+            }));
+
+            // Extract requirements sub-fields
+            const reqs = detail?.requirements;
+
+            return {
+                code: normalizedCode,
+                name: matchedTitle,
+                description,
+                terms: termNames,
+                officialLink,
+                coordinator: detail?.course_coordinator ?? null,
+                campus: detail?.campus ?? null,
+                units: detail?.units ?? null,
+                levelOfStudy: detail?.level_of_study ?? null,
+                prerequisites: reqs?.prerequisites ?? null,
+                corequisites: reqs?.corequisites ?? null,
+                antirequisites: reqs?.antirequisites ?? null,
+                assessments: assessments.length > 0 ? assessments : undefined,
+                learningOutcomes: learningOutcomes.length > 0 ? learningOutcomes : undefined,
+                textbooks: detail?.textbooks ?? null,
+                subjectName: detail?.name?.subject || matchedSubject || null,
+                apiId: fallbackId,
+                universityWideElective: detail?.university_wide_elective ?? null,
+            };
         };
 
-        // Strategy 1: fast path — try known prefix→subject mapping
-        const knownSubject = getSubjectNameFromCodePrefix(codePrefix);
-        if (knownSubject) {
-            const result = await searchSubject(knownSubject);
-            if (result) return result;
-        }
+        // If apiId is dynamically resolved, perform high-performance direct detail lookup!
+        if (apiId) {
+            try {
+                const detailResponse = await fetch(`${env.COURSES_API_URL}/courses/${apiId}`, {
+                    headers,
+                    next: { revalidate: 86400 },
+                });
+                if (detailResponse.ok) {
+                    const detail = await detailResponse.json();
+                    const matchTitle = detail?.name?.title || code;
+                    const matchSubject = detail?.name?.subject || subjectName || '';
+                    const matchCode = detail?.name?.code || catalogCode;
 
-        // Strategy 2: universal fallback — scan all subjects from the API
-        let allSubjects: string[] = [];
-        try {
-            const subjectsUrl = `${env.COURSES_API_URL}/subjects?year=${year}&term=sem1`;
-            const subjectsResponse = await fetch(subjectsUrl, { headers, next: { revalidate: 86400 } });
-            if (subjectsResponse.ok) {
-                const raw = await subjectsResponse.json() as Array<string | { code: string; name: string }>;
-                allSubjects = raw.map(s => (typeof s === 'string' ? s : (s.name || s.code || ''))).filter(Boolean);
+                    const data = buildCourseFromDetail(detail, apiId, matchTitle, matchSubject, matchCode);
+
+                    // Cache for 24 hours
+                    try {
+                        await redis.set(cacheKey, JSON.stringify(data), 'EX', 86400);
+                    } catch (_) {}
+                    return data;
+                }
+            } catch (detailErr) {
+                console.warn(`Direct course detail fetch failed for id ${apiId}:`, detailErr);
             }
-        } catch (err) {
-            console.warn('[CoursesAPI] Failed to fetch subjects for fallback search:', err);
         }
 
-        for (const subject of allSubjects.filter(s => s !== knownSubject)) {
-            const result = await searchSubject(subject);
-            if (result) return result;
-        }
+        // Fallback: Search the /courses endpoint to find the API id for this course code
+        if (subjectName) {
+            for (const term of termQueries) {
+                try {
+                    const searchParams = new URLSearchParams({
+                        year: String(year),
+                        term,
+                        subject: subjectName,
+                    });
+                    const searchUrl = `${env.COURSES_API_URL}/courses?${searchParams.toString()}`;
+                    const searchResponse = await fetch(searchUrl, { headers, next: { revalidate: 86400 } });
 
-        // Strategy 3: local fallback list
-        return FALLBACK_COURSES.find(c => c.code.toLowerCase() === code.toLowerCase()) ?? null;
-};
+                    if (searchResponse.ok) {
+                        const resJson = await searchResponse.json();
+                        const rawCourses = resJson?.courses || [];
 
-                                prerequisites: reqs?.prerequisites ?? null,
-                                corequisites: reqs?.corequisites ?? null,
-                                antirequisites: reqs?.antirequisites ?? null,
-                                assessments: assessments.length > 0 ? assessments : undefined,
-                                learningOutcomes: learningOutcomes.length > 0 ? learningOutcomes : undefined,
-                                textbooks: (detail?.textbooks as string) ?? null,
-                                subjectName: resolvedSubjectName,
-                            };
+                        // Find matching course by catalog code
+                        const match = rawCourses.find((c: any) => {
+                            const apiCode = (c?.name?.code || '').toUpperCase().replace(/\s+/g, '');
+                            const searchCode = catalogCode.replace(/\s+/g, '');
+                            return apiCode === searchCode;
+                        });
+
+                        if (match) {
+                            const foundId = match.id;
+                            const matchSubject = match.name?.subject || subjectName;
+                            const matchCode = match.name?.code || catalogCode;
+                            const matchTitle = match.name?.title || code;
+
+                            // Fetch full course detail by API id
+                            let detail: Record<string, unknown> = {};
+                            try {
+                                const detailResponse = await fetch(`${env.COURSES_API_URL}/courses/${foundId}`, {
+                                    headers,
+                                    next: { revalidate: 86400 },
+                                });
+                                if (detailResponse.ok) {
+                                    detail = await detailResponse.json();
+                                }
+                            } catch (detailErr) {
+                                console.warn(`Course detail fetch failed for id ${foundId}:`, detailErr);
+                            }
+
+                            const data = buildCourseFromDetail(detail, foundId, matchTitle, matchSubject, matchCode);
 
                             // Cache for 24 hours
                             try {
                                 await redis.set(cacheKey, JSON.stringify(data), 'EX', 86400);
-                            } catch (redisErr) {
-                                console.warn('Redis set failed:', redisErr);
-                            }
+                            } catch (_) {}
                             return data;
                         }
                     }
@@ -429,42 +481,8 @@ export const CoursesApiClient = {
         }
 
         // Fallback: check local hardcoded course list
-        const fallback = FALLBACK_COURSES.find(c => c.code.toLowerCase() === code.toLowerCase());
+        const fallback = FALLBACK_COURSES.find((c) => c.code.toLowerCase() === code.toLowerCase());
         if (fallback) return fallback;
-
-        // Last resort: try direct API call with transformed code variants
-        const idsToTry = [code.replace(/\s+/g, '_'), encodeURIComponent(code)];
-        for (const id of idsToTry) {
-            try {
-                const response = await fetch(`${env.COURSES_API_URL}/courses/${id}`, {
-                    headers,
-                    next: { revalidate: 86400 },
-                });
-                if (response.ok) {
-                    const resJson = await response.json();
-                    const subject = resJson?.name?.subject || '';
-                    const catCode = resJson?.name?.code || code;
-                    const title = resJson?.name?.title || code;
-                    const description = resJson?.description || resJson?.outline || `Official Adelaide University outline for ${code}.`;
-                    const terms = Array.isArray(resJson?.terms) ? resJson.terms : ['Semester 1', 'Semester 2'];
-                    const officialLink = resJson?.officialLink || resJson?.link || `https://www.adelaide.edu.au/course-outlines/${id}`;
-
-                    const data: CourseData = {
-                        code: subject ? `${subject} ${catCode}`.trim() : code,
-                        name: title,
-                        description,
-                        terms: terms.map((t: string) => t.replace(' School', '')),
-                        officialLink,
-                    };
-                    try {
-                        await redis.set(cacheKey, JSON.stringify(data), 'EX', 86400);
-                    } catch (_) { /* ignore */ }
-                    return data;
-                }
-            } catch (err) {
-                console.warn(`Direct lookup failed for ${code} with id ${id}:`, err);
-            }
-        }
 
         return null;
     },
