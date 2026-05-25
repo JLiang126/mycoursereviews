@@ -29,6 +29,7 @@ import {
 } from 'react-icons/fa';
 
 import { deleteReview } from '@/app/actions/reviews';
+import { formatLocalDate } from '@/lib/date-utils';
 
 interface ReviewItem {
     id: string;
@@ -192,7 +193,7 @@ export const AdminDashboardClient = ({ reviews, stats }: AdminDashboardClientPro
                                         {review.courseCode}
                                     </TableCell>
                                     <TableCell className="text-2xs text-foreground/60">
-                                        {new Date(review.createdAt).toLocaleDateString()}
+                                        {formatLocalDate(review.createdAt)}
                                     </TableCell>
                                     <TableCell className="text-2xs">
                                         <div className="flex flex-col gap-0.5">

@@ -42,6 +42,7 @@ import {
 import { addComment, toggleLike } from '@/app/actions/reviews';
 import { CourseData } from '@/lib/courses-api';
 import { ReviewModal } from './ReviewModal';
+import { formatLocalDate } from '@/lib/date-utils';
 
 interface Comment {
     id: string;
@@ -170,7 +171,7 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                     <div key={comment.id} className="text-xs flex flex-col gap-1.5 bg-default-50/50 p-2.5 rounded-xl border border-divider/30">
                         <div className="flex justify-between items-center text-foreground/50 font-semibold">
                             <span className="text-primary">{comment.userName}</span>
-                            <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                            <span>{formatLocalDate(comment.createdAt)}</span>
                         </div>
                         <p className="text-foreground/80 leading-relaxed">{comment.content}</p>
                         
@@ -537,7 +538,7 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                                                 <span>&bull;</span>
                                                 <span className="flex items-center gap-1">
                                                     <FaCalendarAlt />
-                                                    {new Date(review.createdAt).toLocaleDateString()}
+                                                    {formatLocalDate(review.createdAt)}
                                                 </span>
                                                 {review.grade && (
                                                     <>
