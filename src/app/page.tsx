@@ -32,7 +32,7 @@ export default function WelcomePage() {
 
                 <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-3xl leading-none">
                     Adelaide University <br />
-                    <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    <span className="text-primary">
                         Course Reviews
                     </span>
                 </h1>
@@ -169,7 +169,7 @@ export default function WelcomePage() {
             </section>
 
             {/* Active Membership / Stepper Bottom Banner */}
-            <section className="flex flex-col items-center text-center gap-4 bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/25 rounded-3xl p-6 sm:p-10">
+            <section className="flex flex-col items-center text-center gap-4 bg-primary/10 border border-primary/25 rounded-3xl p-6 sm:p-10">
                 <FaGraduationCap className="text-primary text-4xl" />
                 <h2 className="text-xl sm:text-2xl font-bold">Empowering Adelaide Students</h2>
                 <p className="text-xs sm:text-sm text-foreground/75 max-w-xl leading-relaxed">

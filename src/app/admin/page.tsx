@@ -23,7 +23,7 @@ export default async function AdminPage() {
                 </p>
                 <Link
                     href="/"
-                    className="mt-4 px-4 py-2 bg-primary text-black font-bold rounded-xl shadow-lg hover:scale-105 transition-transform"
+                    className="mt-4 px-4 py-2 bg-primary text-[#FAF9F5] font-bold rounded-xl shadow-lg hover:scale-105 transition-transform"
                 >
                     Return Home
                 </Link>

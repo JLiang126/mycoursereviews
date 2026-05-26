@@ -503,7 +503,7 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                     <Button
                         color="primary"
                         size="sm"
-                        className="font-bold text-black"
+                        className="font-bold text-[#FAF9F5]"
                         onPress={session ? onOpen : onAuthOpen}
                     >
                         Write Review
@@ -664,7 +664,7 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                                                                 color="primary"
                                                                 isLoading={commentTransition}
                                                                 onPress={() => handleCommentSubmit(review.id)}
-                                                                className="text-black font-semibold"
+                                                                className="text-[#FAF9F5] font-semibold"
                                                             >
                                                                 Submit Comment
                                                             </Button>
@@ -736,7 +736,7 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                                         onClose();
                                         signIn('keycloak');
                                     }}
-                                    className="w-full sm:w-auto font-bold text-black"
+                                    className="w-full sm:w-auto font-bold text-[#FAF9F5]"
                                 >
                                     Log In with Keycloak
                                 </Button>

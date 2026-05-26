@@ -350,7 +350,7 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                 color="primary"
                                 isLoading={isPending}
                                 onPress={() => handleSubmit(onClose)}
-                                className="text-black font-bold"
+                                className="text-[#FAF9F5] font-bold"
                             >
                                 Submit Review
                             </Button>
