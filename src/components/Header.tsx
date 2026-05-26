@@ -17,7 +17,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { FaBookOpen, FaMoon, FaSignInAlt, FaSignOutAlt, FaSun } from 'react-icons/fa';
+import { FaMoon, FaSignInAlt, FaSignOutAlt, FaSun } from 'react-icons/fa';
 
 import { siteConfig } from '@/config/site';
 
@@ -68,9 +68,13 @@ export const Header = () => {
 
             {/* Logo and Brand */}
             <NavbarContent justify="start">
-                <NavbarBrand as={Link} href="/" className="flex items-center gap-2 cursor-pointer">
-                    <FaBookOpen className="text-primary text-2xl" />
-                        <h1 className="font-bold text-inherit">MyCourseReviews</h1>
+                <NavbarBrand as={Link} href="/" className="flex items-center gap-2.5 cursor-pointer">
+                    <img
+                        src="/favicon.svg"
+                        alt="CS Club Logo"
+                        className="w-7 h-7 hover:rotate-12 transition-transform duration-300"
+                    />
+                    <h1 className="font-extrabold text-inherit tracking-tight text-lg">MyCourseReviews</h1>
                 </NavbarBrand>
             </NavbarContent>
 

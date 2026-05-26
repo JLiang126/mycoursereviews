@@ -153,7 +153,7 @@ export const BrowseCoursesClient = ({ courses }: BrowseCoursesClientProps) => {
             <div>
                 <h1 className="text-3xl font-extrabold tracking-tight">Browse Courses</h1>
                 <p className="text-sm text-foreground/60 mt-1">
-                    Explore student reviews, sub-scores, and outlines for Adelaide University courses.
+                    Explore student reviews for Adelaide University courses.
                 </p>
             </div>
 
@@ -313,9 +313,12 @@ export const BrowseCoursesClient = ({ courses }: BrowseCoursesClientProps) => {
                                                 {course.code}
                                             </span>
                                             {course.reviewCount > 0 ? (
-                                                <div className="flex items-center gap-1 text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-full border border-yellow-500/20">
+                                                <div className="flex items-center gap-1 text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2.5 py-0.5 rounded-full border border-yellow-500/20">
                                                     <FaStar className="text-2xs" />
                                                     <span>{course.avgRating.toFixed(1)}</span>
+                                                    <span className="text-foreground/50 font-normal text-3xs ml-1">
+                                                        ({course.reviewCount} {course.reviewCount === 1 ? 'review' : 'reviews'})
+                                                    </span>
                                                 </div>
                                             ) : (
                                                 <span className="text-2xs font-semibold text-foreground/40 bg-default-100 px-2 py-0.5 rounded-full">
@@ -328,9 +331,6 @@ export const BrowseCoursesClient = ({ courses }: BrowseCoursesClientProps) => {
                                             <h3 className="font-bold text-lg line-clamp-1">
                                                 {course.name}
                                             </h3>
-                                            <p className="text-xs text-foreground/50 line-clamp-2 mt-1 leading-relaxed">
-                                                {course.description || 'No description provided.'}
-                                            </p>
                                         </div>
 
                                         <div className="flex flex-wrap gap-1 mt-1">
@@ -345,15 +345,6 @@ export const BrowseCoursesClient = ({ courses }: BrowseCoursesClientProps) => {
                                                     {term}
                                                 </Chip>
                                             ))}
-                                        </div>
-
-                                        <div className="border-t border-divider mt-2 pt-3 flex items-center justify-between text-2xs text-foreground/50 font-semibold">
-                                            <span>
-                                                {course.reviewCount} {course.reviewCount === 1 ? 'review' : 'reviews'}
-                                            </span>
-                                            <span className="text-primary flex items-center gap-1">
-                                                View Reviews &rarr;
-                                            </span>
                                         </div>
                                     </CardBody>
                                 </Card>

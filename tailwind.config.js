@@ -16,18 +16,12 @@ export default {
         "2xs": ["0.625rem", { lineHeight: "0.75rem" }],
       },
       colors: {
-        primary: { DEFAULT: "#0070F3", foreground: "#FFFFFF" },
-        secondary: { DEFAULT: "#A7C7E7", foreground: "#000000" },
-        tertiary: { DEFAULT: "#0084FF", foreground: "#FFFFFF" },
-        "apple-gray": { 300: "#DFDFDF", 500: "#AFAFAF", 700: "#6b6b6b" },
-        "apple-blue": { 300: "#C9E6FE", 500: "#1D9BF6", 700: "#1D6AA1" },
-        "apple-purple": { 300: "#EACDF4", 500: "#AF38D1", 700: "#762C8B" },
-        "apple-green": { 300: "#D4F6C9", 500: "#4AD321", 700: "#3E8522" },
-        "apple-orange": { 300: "#FEDBC4", 500: "#FA6D0D", 700: "#A75117" },
-        "apple-yellow": { 300: "#FDEEC3", 500: "#FCB80F", 700: "#936E10" },
-        "apple-brown": { 300: "#DFD8CF", 500: "#7D5E3B", 700: "#5E4D39" },
-        "apple-red": { 300: "#FEBFD1", 500: "#F50445", 700: "#BB1644" },
-        "not-found": { 300: "#D3D3D3", 500: "#000000", 700: "#000000" },
+        primary: { DEFAULT: "#335C67", foreground: "#FFEAB8" },
+        secondary: { DEFAULT: "#9E2A2B", foreground: "#FFEAB8" },
+        warning: { DEFAULT: "#FAA307", foreground: "#FFEAB8" },
+        cream: { DEFAULT: "#FFEAB8", foreground: "#335C67" },
+        teal: { DEFAULT: "#335C67", foreground: "#FFEAB8" },
+        crimson: { DEFAULT: "#9E2A2B", foreground: "#FFEAB8" },
       },
       fontFamily: {
         "noto-emoji": ['"Noto Color Emoji"', "sans-serif"],
@@ -35,5 +29,50 @@ export default {
     },
   },
   darkMode: "class",
-  plugins: [heroui()],
+  plugins: [
+    heroui({
+      themes: {
+        light: {
+          colors: {
+            background: "#FAF9F5",
+            foreground: "#1A1A1A",
+            primary: {
+              DEFAULT: "#335C67",
+              foreground: "#FAF9F5",
+            },
+            secondary: {
+              DEFAULT: "#9E2A2B",
+              foreground: "#FAF9F5",
+            },
+            warning: {
+              DEFAULT: "#FAA307",
+              foreground: "#1A1A1A",
+            },
+            divider: "#E5E1D8",
+            focus: "#335C67",
+          },
+        },
+        dark: {
+          colors: {
+            background: "#0F191B",
+            foreground: "#FAF9F5",
+            primary: {
+              DEFAULT: "#335C67",
+              foreground: "#FAF9F5",
+            },
+            secondary: {
+              DEFAULT: "#9E2A2B",
+              foreground: "#FAF9F5",
+            },
+            warning: {
+              DEFAULT: "#FAA307",
+              foreground: "#1A1A1A",
+            },
+            divider: "#263B3F",
+            focus: "#FFEAB8",
+          },
+        },
+      },
+    }),
+  ],
 };
