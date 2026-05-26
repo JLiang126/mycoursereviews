@@ -52,7 +52,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         async signIn({ user, profile }) {
             if (!user.id || !user.email) return false;
 
-            // Resolve and map standard CS Club Keycloak roles to local DB roles
+            // Resolve and map standard CS Club roles to local DB roles
             const realmAccess = (profile as any)?.realm_access;
             const roles = realmAccess?.roles || [];
             const role = roles.includes('committee') ? 'admin' : 'user';

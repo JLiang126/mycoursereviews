@@ -39,7 +39,7 @@ const FOOTER_SECTIONS = [
     {
         title: 'Privacy',
         content:
-            "MyCourseReviews secures all user logins through the CS Club Keycloak authentication system. Although reviews can be published anonymously on the public frontend, user Keycloak sub identifiers are safely stored in our database for moderation, accountability, and anti-spam protection. We do not share or trade student identity details.",
+            "MyCourseReviews secures all user logins through the CS Club authentication system. Although reviews can be published anonymously on the public frontend, user Keycloak sub identifiers are safely stored in our database for moderation, accountability, and anti-spam protection. We do not share or trade student identity details.",
     },
 ];
 
@@ -70,9 +70,9 @@ export const Footer = () => {
             <div className="grid grid-cols-2 items-center gap-4 mobile:grid-cols-1 mobile:justify-items-center mobile:gap-6">
                 
                 <div className="flex items-center gap-2">
-                    <img src="/favicon.ico" alt="Logo" className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/20 p-1" />
+                    <img src="/favicon.ico" alt="Logo" className="w-12 h-12 p-1" />
                     <h1 className="ml-1 text-lg font-extrabold text-foreground">
-                        MyCourse<span className="text-primary">Reviews</span>
+                        MyCourseReviews
                     </h1>
                 </div>
 
