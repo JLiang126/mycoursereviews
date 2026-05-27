@@ -14,10 +14,6 @@ export const siteConfig = {
             label: 'Admin',
             href: '/admin',
         },
-        {
-            label: 'Logout',
-            href: '/logout',
-        },
     ],
     links: {
         github: 'https://github.com/compsci-adl/mycoursereviews',

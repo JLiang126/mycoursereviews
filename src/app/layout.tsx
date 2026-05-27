@@ -36,6 +36,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html suppressHydrationWarning lang="en">
+            <head>
+                <link rel="preload" href="/favicon.png" as="image" type="image/png" fetchPriority="high" />
+            </head>
             {env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
                 <Script
                     defer

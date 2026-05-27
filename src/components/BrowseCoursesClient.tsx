@@ -1,6 +1,8 @@
 'use client';
 
 import {
+    Autocomplete,
+    AutocompleteItem,
     Button,
     Card,
     CardBody,
@@ -34,13 +36,13 @@ interface BrowseCoursesClientProps {
 }
 
 const SORT_OPTIONS = [
-    { key: 'recent',      label: 'Most Recent Reviews' },
-    { key: 'name-asc',    label: 'A → Z' },
-    { key: 'name-desc',   label: 'Z → A' },
-    { key: 'rating-desc', label: 'Overall Rating' },
-    { key: 'difficulty',  label: 'Difficulty' },
-    { key: 'usefulness',  label: 'Usefulness' },
-    { key: 'enjoyment',   label: 'Enjoyment' },
+    { key: 'recent',      label: 'Sort by Most Recent Reviews' },
+    { key: 'name-asc',    label: 'Sort by A → Z' },
+    { key: 'name-desc',   label: 'Sort by Z → A' },
+    { key: 'rating-desc', label: 'Sort by Overall Rating' },
+    { key: 'difficulty',  label: 'Sort by Difficulty' },
+    { key: 'usefulness',  label: 'Sort by Usefulness' },
+    { key: 'enjoyment',   label: 'Sort by Enjoyment' },
 ] as const;
 
 const ALL_TERMS = ['Semester 1', 'Semester 2', 'Summer', 'Winter'];
@@ -147,60 +149,118 @@ export const BrowseCoursesClient = ({ courses }: BrowseCoursesClientProps) => {
     };
 
     return (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-8 bg-grid-sheet p-2">
 
             {/* Page Header */}
             <div>
-                <h1 className="text-3xl font-extrabold tracking-tight">Browse Courses</h1>
-                <p className="text-sm text-foreground/60 mt-1">
+                <h1 className="font-mixtape uppercase tracking-tighter text-3xl sm:text-4xl font-extrabold bg-hotpink text-white w-fit px-4 py-1.5 border-3 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] rotate-[-1deg] select-none">
+                    Browse Courses
+                </h1>
+                <p className="font-scribble text-base text-foreground/80 mt-3 font-black rotate-[0.5deg]">
                     Explore student reviews for Adelaide University courses.
                 </p>
             </div>
 
             {/* Filter and Search Controls */}
             {mounted ? (
-                <div className="flex flex-col gap-3 bg-background/40 backdrop-blur-md border border-divider p-4 rounded-2xl shadow-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="flex flex-col gap-4 bg-background border-4 border-foreground p-5 rounded-none shadow-[4px_4px_0px_0px_#000] dark:shadow-[4px_4px_0px_0px_#fff]">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Search */}
-                        <div className="md:col-span-1">
+                        <div>
                             <Input
                                 isClearable
-                                placeholder="Search by code or title..."
-                                startContent={<FaSearch className="text-foreground/45" />}
+                                radius="none"
+                                placeholder="Search courses (code/title)..."
+                                startContent={<FaSearch className="text-foreground" />}
                                 value={searchQuery}
                                 onValueChange={setSearchQuery}
-                                className="w-full"
+                                className="w-full font-mono border-2 border-foreground"
                             />
                         </div>
 
-                        {/* Subject Multi-Select */}
-                        <Select
+                        {/* Subject Autocomplete Search & Select */}
+                        <Autocomplete
                             labelPlacement="outside"
-                            placeholder="Filter by Subject Area"
-                            selectionMode="multiple"
-                            selectedKeys={selectedSubjects}
-                            onSelectionChange={(keys) => setSelectedSubjects(new Set(keys as unknown as string[]))}
+                            radius="none"
+                            placeholder="Filter Subject Area..."
+                            selectedKey={null}
+                            onSelectionChange={(key) => {
+                                if (key) {
+                                    const next = new Set(selectedSubjects);
+                                    next.add(key as string);
+                                    setSelectedSubjects(next);
+                                }
+                            }}
                             aria-label="Filter by subject area"
+                            className="font-mono border-2 border-foreground bg-background text-foreground"
+                            popoverProps={{
+                                classNames: {
+                                    content: "rounded-none border-3 border-foreground bg-background text-foreground shadow-[4px_4px_0px_0px_#000] dark:shadow-[4px_4px_0px_0px_#fff]"
+                                }
+                            }}
+                            listboxProps={{
+                                itemClasses: {
+                                    base: "rounded-none",
+                                }
+                            }}
                         >
                             {allSubjects.map((subject) => (
-                                <SelectItem key={subject} textValue={subject}>
+                                <AutocompleteItem key={subject} textValue={subject} className="font-mono text-xs text-foreground rounded-none">
                                     {subject}
-                                </SelectItem>
+                                </AutocompleteItem>
                             ))}
-                        </Select>
+                        </Autocomplete>
 
                         {/* Term Multi-Select */}
                         <Select
                             labelPlacement="outside"
-                            placeholder="Filter by Term"
+                            radius="none"
+                            placeholder="Filter Term"
                             selectionMode="multiple"
                             selectedKeys={selectedTerms}
                             onSelectionChange={(keys) => setSelectedTerms(new Set(keys as unknown as string[]))}
                             aria-label="Filter by term"
+                            className="font-mono border-2 border-foreground bg-background"
+                            popoverProps={{
+                                classNames: {
+                                    content: "rounded-none border-3 border-foreground bg-background text-foreground shadow-[4px_4px_0px_0px_#000] dark:shadow-[4px_4px_0px_0px_#fff]"
+                                }
+                            }}
+                            listboxProps={{
+                                itemClasses: {
+                                    base: "rounded-none",
+                                }
+                            }}
                         >
                             {ALL_TERMS.map((term) => (
-                                <SelectItem key={term} textValue={term}>
+                                <SelectItem key={term} textValue={term} className="font-mono text-xs rounded-none">
                                     {term}
+                                </SelectItem>
+                            ))}
+                        </Select>
+
+                        {/* Sort By Select */}
+                        <Select
+                            radius="none"
+                            placeholder="Sort By"
+                            selectedKeys={[sortBy]}
+                            onSelectionChange={(keys) => setSortBy(Array.from(keys)[0] as string)}
+                            className="font-mono border-2 border-foreground bg-background"
+                            aria-label="Sort courses"
+                            popoverProps={{
+                                classNames: {
+                                    content: "rounded-none border-3 border-foreground bg-background text-foreground shadow-[4px_4px_0px_0px_#000] dark:shadow-[4px_4px_0px_0px_#fff]"
+                                }
+                            }}
+                            listboxProps={{
+                                itemClasses: {
+                                    base: "rounded-none",
+                                }
+                            }}
+                        >
+                            {SORT_OPTIONS.map((opt) => (
+                                <SelectItem key={opt.key} textValue={opt.label} className="font-mono text-xs rounded-none">
+                                    {opt.label}
                                 </SelectItem>
                             ))}
                         </Select>
@@ -208,44 +268,58 @@ export const BrowseCoursesClient = ({ courses }: BrowseCoursesClientProps) => {
 
                     {/* Active filter chips */}
                     {hasActiveFilters && (
-                        <div className="flex flex-wrap gap-2 items-center pt-1">
+                        <div className="flex flex-wrap gap-2 items-center pt-2 border-t-2 border-dashed border-foreground/30">
                             {Array.from(selectedSubjects).map((s) => (
                                 <Chip
                                     key={s}
                                     size="sm"
-                                    variant="flat"
-                                    color="primary"
-                                    onClose={() => {
-                                        const next = new Set(selectedSubjects);
-                                        next.delete(s);
-                                        setSelectedSubjects(next);
-                                    }}
+                                    radius="none"
+                                    className="border-2 border-foreground font-mono bg-neongreen text-mixtapeblack text-3xs font-extrabold px-2.5 py-1.5 h-fit flex items-center justify-between"
                                 >
-                                    {s}
+                                    <div className="flex items-center gap-2 select-none">
+                                        <span>{s}</span>
+                                        <button
+                                            onClick={() => {
+                                                const next = new Set(selectedSubjects);
+                                                next.delete(s);
+                                                setSelectedSubjects(next);
+                                            }}
+                                            className="cursor-pointer font-black text-[9px] hover:bg-foreground hover:text-background w-3.5 h-3.5 flex items-center justify-center border border-foreground rounded-none transition-colors"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
                                 </Chip>
                             ))}
                             {Array.from(selectedTerms).map((t) => (
                                 <Chip
                                     key={t}
                                     size="sm"
-                                    variant="flat"
-                                    color="secondary"
-                                    onClose={() => {
-                                        const next = new Set(selectedTerms);
-                                        next.delete(t);
-                                        setSelectedTerms(next);
-                                    }}
+                                    radius="none"
+                                    className="border-2 border-foreground font-mono bg-hotpink text-white text-3xs font-extrabold px-2.5 py-1.5 h-fit flex items-center justify-between"
                                 >
-                                    {t}
+                                    <div className="flex items-center gap-2 select-none">
+                                        <span>{t}</span>
+                                        <button
+                                            onClick={() => {
+                                                const next = new Set(selectedTerms);
+                                                next.delete(t);
+                                                setSelectedTerms(next);
+                                            }}
+                                            className="cursor-pointer font-black text-[9px] hover:bg-white hover:text-hotpink w-3.5 h-3.5 flex items-center justify-center border border-white rounded-none transition-colors"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
                                 </Chip>
                             ))}
                             <Button
                                 size="sm"
-                                variant="light"
+                                variant="flat"
                                 color="danger"
                                 startContent={<FaTimes />}
                                 onPress={clearFilters}
-                                className="text-xs h-6 px-2"
+                                className="font-mono text-2xs uppercase font-extrabold h-7 border-2 border-foreground rounded-none bg-background shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff]"
                             >
                                 Clear all
                             </Button>
@@ -253,42 +327,15 @@ export const BrowseCoursesClient = ({ courses }: BrowseCoursesClientProps) => {
                     )}
                 </div>
             ) : (
-                <div className="h-20 w-full bg-background/40 border border-divider rounded-2xl animate-pulse" />
+                <div className="h-24 w-full bg-background border-4 border-foreground rounded-none animate-pulse" />
             )}
-
-            {/* Sort & Count Row */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <p className="text-xs text-foreground/50 font-semibold uppercase tracking-wider">
-                    Showing {visibleCourses.length} of {sortedCourses.length} courses
-                    {sortedCourses.length !== courses.length && ` (${courses.length} total)`}
-                </p>
-
-                {mounted ? (
-                    <Select
-                        size="sm"
-                        label="Sort By"
-                        selectedKeys={[sortBy]}
-                        onSelectionChange={(keys) => setSortBy(Array.from(keys)[0] as string)}
-                        className="w-52"
-                        aria-label="Sort courses"
-                    >
-                        {SORT_OPTIONS.map((opt) => (
-                            <SelectItem key={opt.key} textValue={opt.label}>
-                                {opt.label}
-                            </SelectItem>
-                        ))}
-                    </Select>
-                ) : (
-                    <div className="h-8 w-52 bg-default-100 animate-pulse rounded-xl" />
-                )}
-            </div>
 
             {/* Courses Grid */}
             {sortedCourses.length === 0 ? (
-                <div className="text-center py-16 bg-background/20 border border-dashed border-divider rounded-2xl">
-                    <FaFilter className="text-foreground/20 text-5xl mx-auto mb-4" />
-                    <p className="font-bold text-lg">No courses found</p>
-                    <p className="text-sm text-foreground/50 mt-1">Try updating your filters or search keywords.</p>
+                <div className="text-center py-20 bg-background border-4 border-dashed border-foreground rounded-none shadow-[4px_4px_0px_0px_#000]">
+                    <FaFilter className="text-foreground text-5xl mx-auto mb-4 animate-bounce" />
+                    <p className="font-mixtape font-extrabold uppercase text-lg">No courses found</p>
+                    <p className="font-scribble text-base mt-2">Try updating your filters or search keywords.</p>
                 </div>
             ) : (
                 <>
@@ -305,42 +352,41 @@ export const BrowseCoursesClient = ({ courses }: BrowseCoursesClientProps) => {
                                     href={`/courses/${encodeURIComponent(course.code)}`}
                                     isPressable
                                     isHoverable
-                                    className="bg-background/40 backdrop-blur-sm border border-divider hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 w-full text-left shadow-sm"
+                                    className="bg-background border-4 border-foreground rounded-none shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff] hover:-translate-y-1 hover:rotate-[1deg] hover:shadow-[8px_8px_0px_0px_#000] dark:hover:shadow-[8px_8px_0px_0px_#fff] transition-all duration-300 w-full h-[155px] text-left rounded-none"
                                 >
-                                    <CardBody className="p-5 flex flex-col gap-3">
+                                    <CardBody className="p-4 flex flex-col justify-between h-full gap-2">
                                         <div className="flex justify-between items-start">
-                                            <span className="font-extrabold text-sm text-primary tracking-wide">
+                                            <span className="font-mixtape text-xs uppercase font-extrabold text-mixtapeblack bg-neongreen border-2 border-foreground px-2 py-0.5 shadow-[2px_2px_0px_0px_#000] rotate-[-2deg]">
                                                 {course.code}
                                             </span>
                                             {course.reviewCount > 0 ? (
-                                                <div className="flex items-center gap-1 text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2.5 py-0.5 rounded-full border border-yellow-500/20">
-                                                    <FaStar className="text-2xs" />
+                                                <div className="flex items-center gap-1 font-mono text-xs font-black text-mixtapeblack bg-neonyellow px-2.5 py-0.5 border-2 border-foreground shadow-[2px_2px_0px_0px_#000] rotate-[2deg]">
+                                                    <FaStar className="text-xs" />
                                                     <span>{course.avgRating.toFixed(1)}</span>
-                                                    <span className="text-foreground/50 font-normal text-3xs ml-1">
-                                                        ({course.reviewCount} {course.reviewCount === 1 ? 'review' : 'reviews'})
+                                                    <span className="text-foreground/60 font-normal text-[10px] ml-1">
+                                                        ({course.reviewCount})
                                                     </span>
                                                 </div>
                                             ) : (
-                                                <span className="text-2xs font-semibold text-foreground/40 bg-default-100 px-2 py-0.5 rounded-full">
-                                                    No ratings
+                                                <span className="font-mono text-[10px] uppercase font-black text-foreground/45 bg-foreground/5 px-2 py-0.5 border border-foreground/30">
+                                                    No reviews
                                                 </span>
                                             )}
                                         </div>
 
                                         <div>
-                                            <h3 className="font-bold text-lg line-clamp-1">
+                                            <h3 className="font-mixtape uppercase tracking-tight text-base font-extrabold line-clamp-2 leading-tight">
                                                 {course.name}
                                             </h3>
                                         </div>
 
-                                        <div className="flex flex-wrap gap-1 mt-1">
+                                        <div className="flex flex-wrap gap-1.5 mt-auto">
                                             {course.terms.map((term) => (
                                                 <Chip
                                                     key={term}
                                                     size="sm"
-                                                    variant="flat"
-                                                    color="secondary"
-                                                    className="text-3xs font-semibold"
+                                                    radius="none"
+                                                    className="border-2 border-foreground font-mono bg-cyanaccent text-mixtapeblack text-3xs font-extrabold px-2.5 py-1 h-fit"
                                                 >
                                                     {term}
                                                 </Chip>
@@ -353,9 +399,9 @@ export const BrowseCoursesClient = ({ courses }: BrowseCoursesClientProps) => {
                     </div>
 
                     {/* Infinite scroll sentinel */}
-                    <div ref={sentinelRef} className="flex justify-center py-6">
+                    <div ref={sentinelRef} className="flex justify-center py-8">
                         {hasMore && (
-                            <div className="flex items-center gap-2 text-foreground/40 text-sm font-semibold">
+                            <div className="flex items-center gap-2 text-foreground font-mono text-sm font-black uppercase bg-neonyellow border-3 border-foreground px-4 py-2 shadow-[4px_4px_0px_0px_#000] animate-pulse">
                                 <Spinner size="sm" color="current" />
                                 <span>Loading more courses...</span>
                             </div>

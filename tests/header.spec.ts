@@ -7,18 +7,13 @@ test('header navigation bar renders branding and links successfully', async ({ p
     const brand = page.getByRole('navigation').locator('span').filter({ hasText: 'MyCourse' }).first();
     await expect(brand).toBeVisible();
 
-    // 2. Check main desktop navigation links
-    const homeLink = page.getByRole('navigation').getByRole('link', { name: 'Home' }).first();
-    await expect(homeLink).toBeVisible();
-    await expect(homeLink).toHaveAttribute('href', '/');
+    // 2. Verify "How to Use Guide" icon button is rendering inside navbar
+    const guideBtn = page.getByRole('button', { name: /How to Use Guide/i }).first();
+    await expect(guideBtn).toBeVisible();
 
-    const browseLink = page.getByRole('navigation').getByRole('link', { name: 'Browse Courses' }).first();
-    await expect(browseLink).toBeVisible();
-    await expect(browseLink).toHaveAttribute('href', '/courses');
-
-    const termsLink = page.getByRole('navigation').getByRole('link', { name: 'Terms & Conditions' }).first();
-    await expect(termsLink).toBeVisible();
-    await expect(termsLink).toHaveAttribute('href', '/terms');
+    // Verify "Give Feedback" icon link is rendering inside navbar
+    const feedbackLink = page.getByRole('link', { name: /Give Feedback/i }).first();
+    await expect(feedbackLink).toBeVisible();
 
     // 3. Verify Theme Toggle is rendering inside navbar
     const themeBtn = page.getByRole('navigation').locator('button').filter({ hasText: /🌞|🌚/ }).first();

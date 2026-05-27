@@ -166,25 +166,25 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
         if (filtered.length === 0) return null;
 
         return (
-            <div className={clsx('flex flex-col gap-3 mt-3', depth > 0 && 'border-l-2 border-divider pl-4 sm:pl-6')}>
+            <div className={clsx('flex flex-col gap-3 mt-3', depth > 0 && 'border-l-3 border-foreground pl-4 sm:pl-6')}>
                 {filtered.map((comment) => (
-                    <div key={comment.id} className="text-xs flex flex-col gap-1.5 bg-default-50/50 p-2.5 rounded-xl border border-divider/30">
-                        <div className="flex justify-between items-center text-foreground/50 font-semibold">
-                            <span className="text-primary">{comment.userName}</span>
+                    <div key={comment.id} className="text-xs flex flex-col gap-1.5 bg-background p-3 rounded-none border-2 border-foreground shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff]">
+                        <div className="flex justify-between items-center text-foreground/60 font-mono text-[10px] uppercase font-black">
+                            <span className="text-hotpink font-extrabold">{comment.userName}</span>
                             <span>{formatLocalDate(comment.createdAt)}</span>
                         </div>
-                        <p className="text-foreground/80 leading-relaxed">{comment.content}</p>
+                        <p className="font-scribble text-sm font-bold text-foreground leading-snug tracking-tight">{comment.content}</p>
                         
                         {/* Reply Action */}
                         {session && (
                             <div className="flex justify-start">
                                 <Button
                                     size="sm"
-                                    variant="light"
-                                    color="secondary"
-                                    startContent={<FaReply className="text-xs" />}
+                                    variant="flat"
+                                    radius="none"
+                                    startContent={<FaReply className="text-2xs" />}
                                     onPress={() => setActiveReplyId((prev) => ({ ...prev, [reviewId]: comment.id }))}
-                                    className="h-fit py-0.5 px-1 font-semibold"
+                                    className="h-6 font-mono text-[9px] uppercase font-black bg-background border border-foreground shadow-[1px_1px_0px_0px_#000] py-0.5 px-1.5"
                                 >
                                     Reply
                                 </Button>
@@ -196,25 +196,29 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                             <div className="flex flex-col gap-2 mt-2">
                                 <Textarea
                                     size="sm"
+                                    radius="none"
                                     placeholder={`Reply to ${comment.userName}...`}
                                     value={commentContent[`${reviewId}-${comment.id}`] || ''}
                                     onValueChange={(val) => setCommentContent((prev) => ({ ...prev, [`${reviewId}-${comment.id}`]: val }))}
                                     minRows={1}
+                                    className="font-mono border-2 border-foreground"
                                 />
                                 <div className="flex justify-end gap-2">
                                     <Button
                                         size="sm"
+                                        radius="none"
                                         variant="flat"
-                                        color="default"
                                         onPress={() => setActiveReplyId((prev) => ({ ...prev, [reviewId]: null }))}
+                                        className="font-mono text-2xs uppercase border border-foreground"
                                     >
                                         Cancel
                                     </Button>
                                     <Button
                                         size="sm"
-                                        color="secondary"
+                                        radius="none"
                                         isLoading={commentTransition}
                                         onPress={() => handleCommentSubmit(reviewId, comment.id)}
+                                        className="font-mono text-2xs uppercase font-black bg-cyanaccent text-mixtapeblack border border-foreground shadow-[2px_2px_0px_0px_#000]"
                                     >
                                         Reply
                                     </Button>
@@ -231,7 +235,7 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
     };
 
     return (
-        <div className="flex flex-col gap-8 md:gap-12">
+        <div className="flex flex-col gap-8 md:gap-12 bg-grid-sheet p-2">
             
             {/* Top Navigation Back pointer */}
             <div className="flex items-center justify-between">
@@ -240,7 +244,7 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                     href="/courses"
                     size="sm"
                     variant="flat"
-                    className="font-bold border border-divider bg-background/20"
+                    className="font-mono uppercase font-black text-xs border-2 border-foreground bg-neonyellow text-mixtapeblack rounded-none shadow-[3px_3px_0px_0px_#000] rotate-[-2deg]"
                 >
                     &larr; Back to Courses
                 </Button>
@@ -253,9 +257,9 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                     size="sm"
                     color="secondary"
                     variant="bordered"
-                    className="font-bold"
+                    className="font-mono uppercase font-black text-xs border-2 border-foreground bg-cyanaccent text-mixtapeblack rounded-none shadow-[3px_3px_0px_0px_#000] rotate-[2deg]"
                 >
-                    Official Outline Link &rarr;
+                    Official Outline &rarr;
                 </Button>
             </div>
 
@@ -263,13 +267,13 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 
                 {/* Course Metadata Details Card */}
-                <div className="lg:col-span-2 flex flex-col gap-6 bg-background/40 backdrop-blur-sm border border-divider p-6 sm:p-8 rounded-3xl shadow-sm">
+                <div className="lg:col-span-2 flex flex-col gap-6 bg-background border-4 border-foreground p-6 sm:p-8 rounded-none shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff]">
                     <div>
-                        <span className="text-xs font-extrabold text-primary uppercase tracking-widest">{course.code}</span>
-                        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mt-1">{course.name}</h1>
-                        <div className="flex flex-wrap gap-1.5 mt-3">
+                        <span className="font-mixtape text-xs uppercase font-extrabold text-mixtapeblack bg-neongreen border-2 border-foreground px-3 py-1 w-fit shadow-[2px_2px_0px_0px_#000] rotate-[-2deg] inline-block">{course.code}</span>
+                        <h1 className="font-mixtape uppercase tracking-tighter text-3xl sm:text-5xl font-black mt-3 leading-none">{course.name}</h1>
+                        <div className="flex flex-wrap gap-1.5 mt-4">
                             {course.terms.map((term) => (
-                                <Chip key={term} size="sm" color="primary" variant="flat" className="text-3xs font-bold">
+                                <Chip key={term} size="sm" radius="none" className="border-2 border-foreground font-mono bg-cyanaccent text-mixtapeblack text-3xs font-extrabold rotate-[1deg]">
                                     {term}
                                 </Chip>
                             ))}
@@ -278,51 +282,50 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
 
                     {/* Quick-info pills: coordinator, campus, units, level, elective */}
                     {(course.coordinator || course.campus || course.units || course.levelOfStudy || course.universityWideElective) && (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-3 bg-foreground/5 border-2 border-dashed border-foreground/30 p-4 rounded-none font-mono text-xs mt-1">
                             {course.coordinator && (
-                                <div className="flex items-center gap-1.5 text-xs font-semibold bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full">
-                                    <FaChalkboardTeacher className="text-xs" />
-                                    {course.coordinator}
+                                <div className="flex items-center gap-1.5 text-xs font-black text-foreground/80 bg-background px-2.5 py-1 border border-foreground">
+                                    <FaChalkboardTeacher />
+                                    COORD: {course.coordinator}
                                 </div>
                             )}
                             {course.campus && (
-                                <div className="flex items-center gap-1.5 text-xs font-semibold bg-default-100 text-foreground/70 border border-divider px-3 py-1 rounded-full">
-                                    <FaBuilding className="text-xs" />
-                                    {course.campus}
+                                <div className="flex items-center gap-1.5 text-xs font-black text-foreground/80 bg-background px-2.5 py-1 border border-foreground">
+                                    <FaBuilding />
+                                    CAMPUS: {course.campus}
                                 </div>
                             )}
                             {course.units && (
-                                <div className="flex items-center gap-1.5 text-xs font-semibold bg-default-100 text-foreground/70 border border-divider px-3 py-1 rounded-full">
-                                    <FaInfoCircle className="text-xs" />
-                                    {course.units} units
+                                <div className="flex items-center gap-1.5 text-xs font-black text-foreground/80 bg-background px-2.5 py-1 border border-foreground">
+                                    <FaInfoCircle />
+                                    UNITS: {course.units}
                                 </div>
                             )}
                             {course.levelOfStudy && (
-                                <div className="flex items-center gap-1.5 text-xs font-semibold bg-secondary/10 text-secondary border border-secondary/20 px-3 py-1 rounded-full">
-                                    <FaGraduationCap className="text-xs" />
-                                    {course.levelOfStudy}
+                                <div className="flex items-center gap-1.5 text-xs font-black text-foreground/80 bg-background px-2.5 py-1 border border-foreground">
+                                    <FaGraduationCap />
+                                    LEVEL: {course.levelOfStudy}
                                 </div>
                             )}
                             {course.universityWideElective && (
-                                <div className="flex items-center gap-1.5 text-xs font-semibold bg-success/10 text-success border border-success/20 px-3 py-1 rounded-full">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                                    University-Wide Elective
+                                <div className="flex items-center gap-1.5 text-xs font-black bg-neongreen text-mixtapeblack px-2.5 py-1 border border-foreground rotate-[2deg]">
+                                    ELECTIVE: YES
                                 </div>
                             )}
                         </div>
                     )}
 
                     {/* Description / Course Overview */}
-                    <div className="border-t border-divider pt-6">
-                        <h2 className="text-sm font-extrabold uppercase text-foreground/50 tracking-wider">Course Overview</h2>
-                        <p className="text-sm text-foreground/80 mt-2 leading-relaxed">
+                    <div className="border-t-3 border-foreground pt-6">
+                        <h2 className="font-mixtape text-xs uppercase font-extrabold text-foreground/50 tracking-wider">Course Overview</h2>
+                        <p className="font-mono text-xs text-foreground/80 mt-3 leading-relaxed whitespace-pre-line">
                             {course.description || 'No overview available. Please refer to the official Adelaide University website.'}
                         </p>
                     </div>
 
                     {/* Prerequisites / Corequisites / Antirequisites */}
                     {(course.prerequisites || course.corequisites || course.antirequisites) && (
-                        <div className="border-t border-divider pt-5 flex flex-col gap-3">
+                        <div className="border-t-3 border-foreground pt-5 flex flex-col gap-3">
                             <h2 className="text-sm font-extrabold uppercase text-foreground/50 tracking-wider">Requirements</h2>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 {course.prerequisites && (
@@ -407,134 +410,173 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                 </div>
 
                 {/* Scorecard Aggregates Card */}
-                <div className="bg-background/40 backdrop-blur-sm border border-divider p-6 rounded-3xl shadow-sm flex flex-col gap-6 justify-center">
+                <div className="bg-background border-4 border-foreground p-6 rounded-none shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff] flex flex-col gap-6 justify-center">
                     <div className="text-center">
-                        <h2 className="text-sm font-extrabold uppercase text-foreground/50 tracking-wider">Course Scorecard</h2>
+                        <h2 className="font-mixtape text-xs uppercase font-extrabold text-foreground/50 tracking-wider">Course Scorecard</h2>
                         
                         <div className="flex flex-col items-center justify-center mt-4">
-                            <span className="text-5xl font-extrabold text-foreground">{stats.avgOverall.toFixed(1)}</span>
-                            <div className="flex items-center gap-1 text-yellow-500 text-lg mt-1.5">
+                            <span className="text-5xl font-mixtape font-black uppercase text-foreground bg-neonyellow border-3 border-foreground px-4 py-1.5 shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] rotate-[-2deg] select-none">
+                                {stats.totalReviews > 0 ? stats.avgOverall.toFixed(1) : 'N/A'}
+                            </span>
+                            <div className="flex items-center gap-1 text-yellow-500 text-lg mt-3">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <FaStar
                                         key={star}
                                         className={clsx(
-                                            star <= Math.round(stats.avgOverall) ? 'text-yellow-500' : 'text-default-200'
+                                            stats.totalReviews > 0 && star <= Math.round(stats.avgOverall) ? 'text-[#FAA307]' : 'text-foreground/20'
                                         )}
                                     />
                                 ))}
                             </div>
-                            <span className="text-2xs text-foreground/40 mt-1 font-semibold">
+                            <span className="font-mono text-2xs text-foreground/50 mt-1 font-semibold uppercase">
                                 Based on {stats.totalReviews} {stats.totalReviews === 1 ? 'review' : 'reviews'}
                             </span>
                         </div>
                     </div>
-
-                    <div className="border-t border-divider pt-5 flex flex-col gap-4">
-                        {/* Difficulty rating (gradient bar: lower is better/greener, higher is redder/harder) */}
-                        <div className="flex flex-col gap-1 text-xs">
-                            <div className="flex justify-between font-semibold text-foreground/75">
-                                <span>Difficulty</span>
-                                <span>{stats.avgDifficulty.toFixed(1)}/5.0</span>
+ 
+                    <div className="border-t-3 border-foreground pt-5 flex flex-col gap-5">
+                        {/* Difficulty rating (Synthesizer equalizer style) */}
+                        <div className={clsx("flex flex-col gap-1.5 text-xs font-mono", stats.totalReviews === 0 && "opacity-40 select-none")}>
+                            <div className="flex justify-between font-black uppercase text-foreground">
+                                <span>DIFFICULTY</span>
+                                <span>{stats.totalReviews > 0 ? `${stats.avgDifficulty.toFixed(1)} / 5.0` : 'N/A'}</span>
                             </div>
-                            <Progress
-                                value={(stats.avgDifficulty / 5) * 100}
-                                color={stats.avgDifficulty > 3.5 ? 'danger' : stats.avgDifficulty > 2.5 ? 'warning' : 'success'}
-                                className="h-2"
-                                aria-label="Difficulty average score"
-                            />
+                            <div className="flex gap-1 select-none">
+                                {Array.from({ length: 10 }).map((_, segmentIdx) => {
+                                    const threshold = (segmentIdx + 1) / 2;
+                                    const active = stats.totalReviews > 0 && stats.avgDifficulty >= threshold;
+                                    return (
+                                        <div
+                                            key={segmentIdx}
+                                            className={clsx(
+                                                "h-6 w-full border-2 border-foreground rounded-none transition-all",
+                                                active
+                                                    ? stats.avgDifficulty > 3.5 
+                                                        ? "bg-hotpink shadow-[1px_1px_0px_0px_#000]" 
+                                                        : stats.avgDifficulty > 2.5 
+                                                            ? "bg-neonorange shadow-[1px_1px_0px_0px_#000]"
+                                                            : "bg-neongreen shadow-[1px_1px_0px_0px_#000]"
+                                                    : "bg-foreground/5"
+                                            )}
+                                        />
+                                    );
+                                })}
+                            </div>
                         </div>
-
-                        {/* Usefulness rating */}
-                        <div className="flex flex-col gap-1 text-xs">
-                            <div className="flex justify-between font-semibold text-foreground/75">
-                                <span>Usefulness</span>
-                                <span>{stats.avgUsefulness.toFixed(1)}/5.0</span>
+ 
+                        {/* Usefulness rating (Synthesizer equalizer style) */}
+                        <div className={clsx("flex flex-col gap-1.5 text-xs font-mono", stats.totalReviews === 0 && "opacity-40 select-none")}>
+                            <div className="flex justify-between font-black uppercase text-foreground">
+                                <span>USEFULNESS</span>
+                                <span>{stats.totalReviews > 0 ? `${stats.avgUsefulness.toFixed(1)} / 5.0` : 'N/A'}</span>
                             </div>
-                            <Progress
-                                value={(stats.avgUsefulness / 5) * 100}
-                                color="secondary"
-                                className="h-2"
-                                aria-label="Usefulness average score"
-                            />
+                            <div className="flex gap-1 select-none">
+                                {Array.from({ length: 10 }).map((_, segmentIdx) => {
+                                    const threshold = (segmentIdx + 1) / 2;
+                                    const active = stats.totalReviews > 0 && stats.avgUsefulness >= threshold;
+                                    return (
+                                        <div
+                                            key={segmentIdx}
+                                            className={clsx(
+                                                "h-6 w-full border-2 border-foreground rounded-none transition-all",
+                                                active
+                                                    ? "bg-cyanaccent shadow-[1px_1px_0px_0px_#000]"
+                                                    : "bg-foreground/5"
+                                            )}
+                                        />
+                                    );
+                                })}
+                            </div>
                         </div>
-
-                        {/* Enjoyment rating */}
-                        <div className="flex flex-col gap-1 text-xs">
-                            <div className="flex justify-between font-semibold text-foreground/75">
-                                <span>Enjoyment</span>
-                                <span>{stats.avgEnjoyment.toFixed(1)}/5.0</span>
+ 
+                        {/* Enjoyment rating (Synthesizer equalizer style) */}
+                        <div className={clsx("flex flex-col gap-1.5 text-xs font-mono", stats.totalReviews === 0 && "opacity-40 select-none")}>
+                            <div className="flex justify-between font-black uppercase text-foreground">
+                                <span>ENJOYMENT</span>
+                                <span>{stats.totalReviews > 0 ? `${stats.avgEnjoyment.toFixed(1)} / 5.0` : 'N/A'}</span>
                             </div>
-                            <Progress
-                                value={(stats.avgEnjoyment / 5) * 100}
-                                color="primary"
-                                className="h-2"
-                                aria-label="Enjoyment average score"
-                            />
+                            <div className="flex gap-1 select-none">
+                                {Array.from({ length: 10 }).map((_, segmentIdx) => {
+                                    const threshold = (segmentIdx + 1) / 2;
+                                    const active = stats.totalReviews > 0 && stats.avgEnjoyment >= threshold;
+                                    return (
+                                        <div
+                                            key={segmentIdx}
+                                            className={clsx(
+                                                "h-6 w-full border-2 border-foreground rounded-none transition-all",
+                                                active
+                                                    ? "bg-neongreen shadow-[1px_1px_0px_0px_#000]"
+                                                    : "bg-foreground/5"
+                                            )}
+                                        />
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Reviews Grid Header */}
-            <div className="border-t border-divider pt-8 md:pt-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="border-t-4 border-foreground pt-8 md:pt-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-extrabold">Student Reviews</h2>
-                    <p className="text-xs text-foreground/60 mt-0.5">Read about actual class experiences and sub-scores.</p>
+                    <h1 className="font-mixtape uppercase tracking-tighter text-2xl sm:text-3xl font-extrabold bg-hotpink text-white w-fit px-3 py-1 border-3 border-foreground shadow-[3px_3px_0px_0px_#000] rotate-[-1.5deg] select-none">Student Reviews</h1>
+                    <p className="font-scribble text-sm text-foreground/80 mt-2 font-bold rotate-[1deg]">Read about actual class experiences and sub-scores.</p>
                 </div>
 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     {mounted ? (
                         <Select
                             size="sm"
+                            radius="none"
                             label="Sort Feed"
                             selectedKeys={[sortBy]}
                             onSelectionChange={(keys) => setSortBy(Array.from(keys)[0] as string)}
-                            className="w-40"
+                            className="w-44 font-mono border-2 border-foreground bg-background"
                             aria-label="Sort reviews"
                         >
-                            <SelectItem key="recent" textValue="Most Recent">Most Recent</SelectItem>
-                            <SelectItem key="rating-desc" textValue="Highest Rated">Highest Rated</SelectItem>
-                            <SelectItem key="rating-asc" textValue="Lowest Rated">Lowest Rated</SelectItem>
+                            <SelectItem key="recent" textValue="Most Recent" className="font-mono text-xs">Most Recent</SelectItem>
+                            <SelectItem key="rating-desc" textValue="Highest Rated" className="font-mono text-xs">Highest Rated</SelectItem>
+                            <SelectItem key="rating-asc" textValue="Lowest Rated" className="font-mono text-xs">Lowest Rated</SelectItem>
                         </Select>
                     ) : (
-                        <div className="h-8 w-40 bg-default-100/50 animate-pulse rounded-xl border border-divider/20" />
+                        <div className="h-10 w-44 bg-background border-2 border-foreground animate-pulse" />
                     )}
 
                     <Button
                         color="primary"
-                        size="sm"
-                        className="font-bold text-[#FAF9F5]"
+                        size="md"
+                        radius="none"
+                        className="font-mono text-xs uppercase font-black bg-neongreen text-mixtapeblack border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:scale-105 active:scale-95 transition-all duration-200"
                         onPress={session ? onOpen : onAuthOpen}
                     >
                         Write Review
                     </Button>
                 </div>
-            </div>
-
-            {/* Reviews Feed List */}
+            </div>            {/* Reviews Feed List */}
             {sortedReviews.length === 0 ? (
-                <div className="text-center py-16 bg-background/10 border border-dashed border-divider rounded-2xl">
-                    <FaGraduationCap className="text-foreground/20 text-5xl mx-auto mb-4" />
-                    <p className="font-bold text-lg">No reviews yet</p>
-                    <p className="text-sm text-foreground/50 mt-1">Be the first student to review this course!</p>
+                <div className="text-center py-20 bg-background border-4 border-dashed border-foreground rounded-none shadow-[4px_4px_0px_0px_#000]">
+                    <FaGraduationCap className="text-foreground text-5xl mx-auto mb-4 animate-bounce" />
+                    <p className="font-mixtape font-extrabold uppercase text-lg">No reviews yet</p>
+                    <p className="font-scribble text-base mt-2">Be the first student to review this course!</p>
                 </div>
             ) : (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-8">
                     {sortedReviews.map((review) => {
                         const isExpanded = expandedReviews[review.id];
                         const shouldTruncate = review.description.length > 250;
 
                         return (
-                            <Card key={review.id} className="bg-background/40 backdrop-blur-sm border border-divider shadow-sm">
+                            <Card key={review.id} className="bg-background border-4 border-foreground rounded-none shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff]">
                                 <CardBody className="p-5 sm:p-6 flex flex-col gap-4">
                                     
                                     {/* Review Card Header */}
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-divider/40 pb-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-3 border-foreground pb-4">
                                         
                                         <div className="flex flex-col gap-1">
-                                            <h3 className="font-extrabold text-lg sm:text-xl text-foreground/90">{review.title}</h3>
-                                            <div className="flex flex-wrap items-center gap-2 text-2xs text-foreground/50 font-semibold">
-                                                <span className="text-primary">{review.isAnonymous ? 'Anonymous Student' : review.reviewerName}</span>
+                                            <h3 className="font-mixtape uppercase tracking-tight text-xl font-extrabold text-foreground">{review.title}</h3>
+                                            <div className="flex flex-wrap items-center gap-2 text-2xs font-mono uppercase font-black">
+                                                <span className="text-hotpink">{review.isAnonymous ? 'Anonymous Student' : review.reviewerName}</span>
                                                 <span>&bull;</span>
                                                 <span className="flex items-center gap-1">
                                                     <FaCalendarAlt />
@@ -543,27 +585,27 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                                                 {review.grade && (
                                                     <>
                                                         <span>&bull;</span>
-                                                        <span className="text-secondary font-bold">Grade: {review.grade}</span>
+                                                        <span className="text-neongreen bg-mixtapeblack px-1.5 py-0.5 border border-foreground">Grade: {review.grade}</span>
                                                     </>
                                                 )}
                                                 <span>&bull;</span>
-                                                <Chip size="sm" variant="flat" className="h-4 text-[9px] font-bold">
+                                                <Chip size="sm" radius="none" className="border border-foreground font-mono bg-cyanaccent text-mixtapeblack text-3xs font-extrabold h-5">
                                                     Took {review.termTaken}
                                                 </Chip>
                                             </div>
                                         </div>
 
                                         {/* Visual Rating score stars */}
-                                        <div className="flex items-center gap-1.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded-2xl h-fit w-fit">
-                                            <FaStar className="text-xs" />
-                                            <span className="text-sm font-extrabold">{review.overallRating.toFixed(1)}</span>
+                                        <div className="flex items-center gap-1.5 bg-neonyellow text-mixtapeblack border-2 border-foreground px-3 py-1 rounded-none h-fit w-fit shadow-[2px_2px_0px_0px_#000] rotate-[3deg] font-mono font-black text-xs">
+                                            <FaStar />
+                                            <span>{review.overallRating.toFixed(1)}</span>
                                         </div>
                                     </div>
 
                                     {/* Review Description & See More Trigger */}
                                     <div>
                                         <p className={clsx(
-                                            'text-sm text-foreground/80 leading-relaxed whitespace-pre-line',
+                                            'text-sm font-mono text-foreground/80 leading-relaxed whitespace-pre-line',
                                             !isExpanded && shouldTruncate && 'line-clamp-3'
                                         )}>
                                             {review.description}
@@ -575,7 +617,7 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                                                 variant="light"
                                                 color="primary"
                                                 onPress={() => toggleExpand(review.id)}
-                                                className="h-fit px-0.5 mt-2 font-bold hover:underline"
+                                                className="font-mono text-2xs uppercase font-extrabold h-7 mt-2 hover:underline"
                                             >
                                                 {isExpanded ? 'See Less' : 'See More'}
                                             </Button>
@@ -583,38 +625,41 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                                     </div>
 
                                     {/* Sub-scores Metrics Badges */}
-                                    <div className="flex flex-wrap gap-4 bg-default-50/50 border border-divider/40 p-3 rounded-2xl text-2xs font-bold text-foreground/60 w-fit">
+                                    <div className="flex flex-wrap gap-4 bg-background border-2 border-foreground p-3 rounded-none text-2xs font-mono font-black text-foreground/75 w-fit shadow-[2px_2px_0px_0px_#000] rotate-[-1deg]">
                                         <span className="flex items-center gap-1.5">
-                                            Difficulty:{' '}
+                                            DIFFICULTY:{' '}
                                             <span className={clsx(
-                                                'font-extrabold text-foreground',
-                                                review.difficultyScore > 3.5 ? 'text-red-500' : 'text-green-500'
+                                                'font-extrabold',
+                                                review.difficultyScore > 3.5 ? 'text-hotpink' : 'text-neongreen'
                                             )}>
                                                 {review.difficultyScore}/5
                                             </span>
                                         </span>
                                         <span className="flex items-center gap-1.5">
-                                            Usefulness:{' '}
-                                            <span className="text-secondary font-extrabold">{review.usefulnessScore}/5</span>
+                                            USEFULNESS:{' '}
+                                            <span className="text-cyanaccent font-extrabold">{review.usefulnessScore}/5</span>
                                         </span>
                                         <span className="flex items-center gap-1.5">
-                                            Enjoyment:{' '}
-                                            <span className="text-primary font-extrabold">{review.enjoymentScore}/5</span>
+                                            ENJOYMENT:{' '}
+                                            <span className="text-neongreen font-extrabold">{review.enjoymentScore}/5</span>
                                         </span>
                                     </div>
 
                                     {/* Review Actions Panel: Like & Comments toggle */}
-                                    <div className="border-t border-divider/30 pt-4 flex flex-col gap-4">
+                                    <div className="border-t-3 border-foreground pt-4 flex flex-col gap-4">
                                         <div className="flex items-center gap-3">
                                             {/* Likes Button */}
                                             <Button
                                                 size="sm"
+                                                radius="none"
                                                 variant="flat"
-                                                color={review.likedByCurrentUser ? 'primary' : 'default'}
                                                 isLoading={likeTransition}
                                                 onPress={() => handleLike(review.id)}
-                                                startContent={review.likedByCurrentUser ? <FaHeart className="text-black" /> : <FaRegHeart />}
-                                                className="font-bold text-xs"
+                                                startContent={review.likedByCurrentUser ? <FaHeart className="text-mixtapeblack" /> : <FaRegHeart />}
+                                                className={clsx(
+                                                    "font-mono text-2xs uppercase font-black border-2 border-foreground shadow-[2px_2px_0px_0px_#000] transition-all",
+                                                    review.likedByCurrentUser ? "bg-hotpink text-white" : "bg-background text-foreground"
+                                                )}
                                             >
                                                 Like{review.likesCount > 0 && ` (${review.likesCount})`}
                                             </Button>
@@ -622,22 +667,23 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                                             {/* Comments Toggle Input */}
                                             <Button
                                                 size="sm"
-                                                variant="light"
+                                                radius="none"
+                                                variant="flat"
                                                 startContent={<FaComments />}
                                                 onPress={() => setActiveReplyId((prev) => ({
                                                     ...prev,
                                                     [review.id]: activeReplyId[review.id] === 'root' ? null : 'root'
                                                 }))}
-                                                className="font-bold text-xs"
+                                                className="font-mono text-2xs uppercase font-black bg-background border-2 border-foreground shadow-[2px_2px_0px_0px_#000] text-foreground"
                                             >
                                                 Comments ({review.comments.length})
                                             </Button>
                                         </div>
 
                                         {/* Dynamic Comments List & Threading reply inputs */}
-                                        {activeReplyId[review.id] !== undefined && (
-                                            <div className="bg-default-100/30 p-4 rounded-2xl border border-divider/40 flex flex-col gap-3">
-                                                <h4 className="text-xs font-extrabold uppercase text-foreground/50 tracking-wider">
+                                        {true && (
+                                            <div className="bg-foreground/[0.03] p-4 rounded-none border-2 border-dashed border-foreground/45 flex flex-col gap-3">
+                                                <h4 className="font-mixtape text-[10px] uppercase font-extrabold text-foreground/50 tracking-wider">
                                                     Comments Feed
                                                 </h4>
 
@@ -646,25 +692,29 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
                                                     <div className="flex flex-col gap-2 mt-2">
                                                         <Textarea
                                                             size="sm"
+                                                            radius="none"
                                                             placeholder="Write a comment about this review..."
                                                             value={commentContent[`${review.id}-root`] || ''}
                                                             onValueChange={(val) => setCommentContent((prev) => ({ ...prev, [`${review.id}-root`]: val }))}
                                                             minRows={2}
+                                                            className="font-mono border-2 border-foreground"
                                                         />
                                                         <div className="flex justify-end gap-2">
                                                             <Button
                                                                 size="sm"
+                                                                radius="none"
                                                                 variant="flat"
                                                                 onPress={() => setActiveReplyId((prev) => ({ ...prev, [review.id]: null }))}
+                                                                className="font-mono text-2xs border border-foreground"
                                                             >
                                                                 Cancel
                                                             </Button>
                                                             <Button
                                                                 size="sm"
-                                                                color="primary"
+                                                                radius="none"
                                                                 isLoading={commentTransition}
                                                                 onPress={() => handleCommentSubmit(review.id)}
-                                                                className="text-[#FAF9F5] font-semibold"
+                                                                className="font-mono text-2xs uppercase font-black bg-neongreen text-mixtapeblack border border-foreground shadow-[2px_2px_0px_0px_#000]"
                                                             >
                                                                 Submit Comment
                                                             </Button>
@@ -674,7 +724,7 @@ export const CourseDetailClient = ({ course, reviews, stats }: CourseDetailClien
 
                                                 {/* Recursive rendering of comments thread tree */}
                                                 {review.comments.length === 0 ? (
-                                                    <p className="text-2xs text-foreground/40 font-semibold italic py-2">
+                                                    <p className="font-mono text-[10px] text-foreground/50 font-semibold italic py-2">
                                                         No comments yet. Log in to start the discussion!
                                                     </p>
                                                 ) : (

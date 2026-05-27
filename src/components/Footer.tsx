@@ -1,6 +1,7 @@
 'use client';
 
 import { Divider, Modal, ModalBody, ModalContent, ModalHeader } from '@heroui/react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import {
@@ -28,18 +29,27 @@ const SOCIAL_LINKS = [
 const FOOTER_SECTIONS = [
     {
         title: 'About',
+        bgClass: 'bg-neonyellow text-mixtapeblack',
         content:
             "MyCourseReviews is the Adelaide University Computer Science Club's course outlines and review portal. Built by students, for students, it provides a transparent, secure platform that allows university peers to cast ratings easily on difficulty, usefulness, and enjoyment metrics, helping students explore their study pathways.",
     },
     {
         title: 'Disclaimer',
+        bgClass: 'bg-neongreen text-mixtapeblack',
         content:
             "MyCourseReviews is a student-run repository developed by the Computer Science Club. The club is an independent student organization and does not officially represent the Adelaide University, Faculty, or School. Ratings and reviews express the subjective experiences of individual authors, and course information is subject to change.",
     },
     {
         title: 'Privacy',
+        bgClass: 'bg-hotpink text-white',
         content:
             "MyCourseReviews secures all user logins through the CS Club authentication system. Although reviews can be published anonymously on the public frontend, user Keycloak sub identifiers are safely stored in our database for moderation, accountability, and anti-spam protection. We do not share or trade student identity details.",
+    },
+    {
+        title: 'Terms',
+        bgClass: 'bg-cyanaccent text-white',
+        content:
+            "By using MyCourseReviews, you agree to comply with our Code of Conduct: reviews must comply with the Adelaide University Student Charter, remaining respectful, fair, and constructive. We strictly prohibit fake content, spam, off-topic, offensive, or malicious submissions. Tutors and coordinators are barred from reviewing semesters in which they taught, and personal information or harassment is strictly forbidden.",
     },
 ];
 
@@ -51,11 +61,11 @@ interface FooterModalProps {
 }
 
 const FooterModal = ({ title, content, isOpen, onClose }: FooterModalProps) => (
-    <Modal isOpen={isOpen} onClose={onClose} className="bg-background border border-divider text-foreground">
-        <ModalContent>
-            <ModalHeader className="font-extrabold">{title}</ModalHeader>
-            <ModalBody>
-                <p className="mb-4 text-sm text-foreground/80 leading-relaxed">{content}</p>
+    <Modal isOpen={isOpen} onClose={onClose} className="bg-background border-4 border-foreground text-foreground rounded-none shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
+        <ModalContent className="rounded-none">
+            <ModalHeader className="font-mixtape uppercase tracking-tighter text-xl border-b-3 border-foreground px-6 py-4">{title}</ModalHeader>
+            <ModalBody className="p-6">
+                <p className="text-sm font-mono leading-relaxed">{content}</p>
             </ModalBody>
         </ModalContent>
     </Modal>
@@ -65,48 +75,44 @@ export const Footer = () => {
     const [openModal, setOpenModal] = useState<string | null>(null);
 
     return (
-        <footer className="space-y-4 text-foreground/50 py-8 max-w-screen-xl mx-auto w-full px-4">
-            <Divider className="mb-6 bg-divider" />
-            <div className="grid grid-cols-2 items-center gap-4 mobile:grid-cols-1 mobile:justify-items-center mobile:gap-6">
+        <footer className="w-full mt-12 bg-background border-4 border-foreground p-6 sm:p-8 rounded-none shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff] max-w-screen-xl mx-auto">
+            <div className="grid grid-cols-2 items-center gap-6 mobile:grid-cols-1 mobile:justify-items-center mobile:gap-8">
                 
-                <div className="flex items-center gap-2">
-                    <img src="/favicon.ico" alt="Logo" className="w-12 h-12 p-1" />
-                    <h1 className="ml-1 text-lg font-extrabold text-foreground">
+                {/* Logo and Brand Title */}
+                <div className="flex items-center gap-3">
+                    <Image src="/favicon.png" alt="CS Club Logo" width={40} height={40} priority unoptimized className="hover:rotate-12 transition-transform duration-300 select-none" />
+                    <h1 className="text-lg font-mixtape font-black tracking-tight text-foreground select-none">
                         MyCourseReviews
                     </h1>
                 </div>
 
-                <div className="mt-0 flex gap-6 justify-self-end mobile:justify-self-auto">
+                {/* Course information tab sections */}
+                <div className="mt-0 flex flex-wrap gap-4 justify-self-end mobile:justify-self-auto">
                     {FOOTER_SECTIONS.map((section, i) => (
                         <h3
                             key={i}
-                            className="cursor-pointer text-xs font-bold uppercase tracking-wider hover:text-primary transition-colors duration-200"
+                            className={`cursor-pointer font-mono text-xs uppercase tracking-wide font-black border-2 border-foreground px-2 py-1 shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff] hover:scale-105 active:scale-95 transition-all ${section.bgClass}`}
                             onClick={() => setOpenModal(section.title)}
                         >
                             {section.title}
                         </h3>
                     ))}
-                    <Link
-                        href="/terms"
-                        className="text-xs font-bold uppercase tracking-wider hover:text-primary transition-colors duration-200"
-                    >
-                        Terms &amp; Conditions
-                    </Link>
                 </div>
 
-                <div className="flex items-center text-xs font-semibold">
+                <div className="font-mono text-xs text-foreground/60 font-semibold">
                     <span className="mr-1">&copy; {new Date().getFullYear()}</span>
                     <a href="https://csclub.org.au/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary transition-colors">
-                        The Adelaide University Computer Science Club
+                        Adelaide University Computer Science Club
                     </a>
                 </div>
 
-                <div className="flex gap-5 justify-self-end text-xl mobile:justify-self-auto">
+                {/* Sticker-style social badges */}
+                <div className="flex flex-wrap gap-3 justify-self-end text-sm mobile:justify-self-auto">
                     {SOCIAL_LINKS.map(({ icon: Icon, link }, i) => (
                         <a
                             href={link}
                             key={i}
-                            className="text-foreground/40 hover:text-primary transition-colors duration-200"
+                            className="p-1.5 border-2 border-foreground rounded-none bg-background text-foreground shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff] hover:bg-neongreen hover:text-mixtapeblack hover:rotate-6 hover:-translate-y-0.5 transition-all duration-150"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
