@@ -58,20 +58,44 @@ export default async function CoursesPage() {
         console.error('Error fetching course DB statistics:', error);
     }
 
-    // 3. Map aggregates onto API courses list
-    const coursesWithStats = apiCourses.map((course) => {
-        const stat = dbStats.find((s) => s.courseCode.toLowerCase() === course.code.toLowerCase());
-        return {
-            ...course,
-            subject: extractSubject(course.code),
-            avgRating: stat?.avgRating ?? 0,
-            avgDifficulty: stat?.avgDifficulty ?? 0,
-            avgUsefulness: stat?.avgUsefulness ?? 0,
-            avgEnjoyment: stat?.avgEnjoyment ?? 0,
-            reviewCount: stat?.reviewCount ?? 0,
-            mostRecentReview: stat?.mostRecentReview ?? null,
-        };
-    });
+    // Find course codes in the database that are no longer in the API (case-insensitive)
+    const apiCourseCodes = new Set(apiCourses.map((c) => c.code.toLowerCase()));
+    const noLongerOfferedStats = dbStats.filter((s) => !apiCourseCodes.has(s.courseCode.toLowerCase()));
+
+    const noLongerOfferedCourses = noLongerOfferedStats.map((stat) => ({
+        code: stat.courseCode,
+        name: stat.courseCode, // fallback to code prefix
+        description: 'This course is no longer offered by Adelaide University, but its historical reviews have been preserved below.',
+        terms: ['No Longer Offered'],
+        officialLink: '#',
+        isNoLongerOffered: true,
+        subject: extractSubject(stat.courseCode),
+        avgRating: stat.avgRating,
+        avgDifficulty: stat.avgDifficulty,
+        avgUsefulness: stat.avgUsefulness,
+        avgEnjoyment: stat.avgEnjoyment,
+        reviewCount: stat.reviewCount,
+        mostRecentReview: stat.mostRecentReview,
+    }));
+
+    // 3. Map aggregates onto API courses list and combine with no-longer-offered courses
+    const coursesWithStats = [
+        ...apiCourses.map((course) => {
+            const stat = dbStats.find((s) => s.courseCode.toLowerCase() === course.code.toLowerCase());
+            return {
+                ...course,
+                isNoLongerOffered: false,
+                subject: extractSubject(course.code),
+                avgRating: stat?.avgRating ?? 0,
+                avgDifficulty: stat?.avgDifficulty ?? 0,
+                avgUsefulness: stat?.avgUsefulness ?? 0,
+                avgEnjoyment: stat?.avgEnjoyment ?? 0,
+                reviewCount: stat?.reviewCount ?? 0,
+                mostRecentReview: stat?.mostRecentReview ?? null,
+            };
+        }),
+        ...noLongerOfferedCourses,
+    ];
 
     return <BrowseCoursesClient courses={coursesWithStats} />;
 }

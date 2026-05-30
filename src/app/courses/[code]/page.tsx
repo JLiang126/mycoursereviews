@@ -6,6 +6,7 @@ import { db } from '@/db';
 import { comments, likes, reviews, users } from '@/db/schema';
 import { CoursesApiClient } from '@/lib/courses-api';
 import { CourseDetailClient } from '@/components/CourseDetailClient';
+import { getCourseUpdateVoteData } from '@/app/actions/courseUpdates';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,15 +24,17 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
     // 1. Fetch course description outline from Redis-backed Courses API client
     let courseData = await CoursesApiClient.getCourseByCode(decodedCode);
+    const isNoLongerOffered = !courseData;
     if (!courseData) {
-        // Build a minimal default so the page doesn't 404
+        // Course is no longer in the API, build a no-longer-offered fallback
         const normalized = decodedCode.toUpperCase().trim();
         courseData = {
             code: normalized,
             name: normalized,
-            description: '',
-            terms: ['Semester 1', 'Semester 2'],
-            officialLink: `https://www.adelaide.edu.au/course-outlines/${encodeURIComponent(normalized.replace(/\s+/g, '_'))}`,
+            description: 'This course is no longer offered by Adelaide University. Historical reviews have been preserved below for reference.',
+            terms: ['No Longer Offered'],
+            officialLink: '#',
+            isNoLongerOffered: true,
         };
     }
 
@@ -41,6 +44,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
         reviewsList = await db
             .select({
                 id: reviews.id,
+                userId: reviews.userId,
                 title: reviews.title,
                 description: reviews.description,
                 overallRating: reviews.overallRating,
@@ -138,11 +142,30 @@ export default async function CourseDetailPage({ params }: PageProps) {
         totalReviews,
     };
 
+    // 5. Fetch community votes on last major update
+    let defaultLastUpdate = 'Semester 1, 2026';
+    if (courseData.terms && courseData.terms.length > 0) {
+        const firstTerm = courseData.terms.filter(t => t !== 'No Longer Offered')[0];
+        if (firstTerm === 'Semester 2') {
+            defaultLastUpdate = 'Semester 2, 2026';
+        } else if (firstTerm === 'Summer') {
+            defaultLastUpdate = 'Summer School, 2026';
+        } else if (firstTerm === 'Winter') {
+            defaultLastUpdate = 'Winter School, 2026';
+        } else {
+            defaultLastUpdate = 'Semester 1, 2026';
+        }
+    }
+
+    const updateVoteData = await getCourseUpdateVoteData(decodedCode, session?.user?.id ?? undefined, defaultLastUpdate);
+
     return (
         <CourseDetailClient
             course={courseData}
             reviews={reviewsWithDetails}
             stats={stats}
+            updateVoteData={updateVoteData}
+            defaultLastUpdate={defaultLastUpdate}
         />
     );
 }

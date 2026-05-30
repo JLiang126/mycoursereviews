@@ -12,6 +12,18 @@ jest.mock('next-auth/react', () => ({
 jest.mock('@/app/actions/reviews', () => ({
     addComment: jest.fn(),
     toggleLike: jest.fn(),
+    deleteReview: jest.fn(),
+    deleteComment: jest.fn(),
+    updateComment: jest.fn(),
+}));
+
+jest.mock('@/app/actions/courseUpdates', () => ({
+    voteOnCourseUpdate: jest.fn().mockResolvedValue({ success: true }),
+}));
+
+jest.mock('@/lib/course-update-voting', () => ({
+    UPDATE_TERM_OPTIONS: ['Semester 1, 2026', 'Semester 2, 2026'],
+    DEFAULT_LAST_UPDATE: 'Semester 1, 2026',
 }));
 
 // Mock @heroui/react Modal components to render as standard divs, avoiding complex framer-motion overlays in Jest jsdom
@@ -54,9 +66,18 @@ const mockStats = {
     totalReviews: 1,
 };
 
+const mockUpdateVoteData = {
+    consensusTerm: 'Semester 1, 2026',
+    confirmCount: 0,
+    disputeCount: 0,
+    currentUserVote: null,
+    totalVotes: 0,
+};
+
 const mockReviews = [
     {
         id: 'rev-1',
+        userId: 'usr-1',
         title: 'Great Introductory Course',
         description: 'Loved learning python and building projects.',
         overallRating: 5,
@@ -87,6 +108,7 @@ describe('CourseDetailClient Component', () => {
                 course={mockCourse}
                 reviews={mockReviews}
                 stats={mockStats}
+                updateVoteData={mockUpdateVoteData}
             />
         );
 
@@ -107,6 +129,7 @@ describe('CourseDetailClient Component', () => {
                 course={mockCourse}
                 reviews={mockReviews}
                 stats={mockStats}
+                updateVoteData={mockUpdateVoteData}
             />
         );
 
@@ -134,6 +157,7 @@ describe('CourseDetailClient Component', () => {
                 course={mockCourse}
                 reviews={mockReviews}
                 stats={mockStats}
+                updateVoteData={mockUpdateVoteData}
             />
         );
 

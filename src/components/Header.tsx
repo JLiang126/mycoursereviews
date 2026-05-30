@@ -23,7 +23,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { FaMoon, FaSignInAlt, FaSignOutAlt, FaSun, FaQuestion, FaCommentAlt } from 'react-icons/fa';
+import { FaMoon, FaSignInAlt, FaSignOutAlt, FaSun, FaQuestion, FaCommentAlt, FaBookOpen, FaClipboardList } from 'react-icons/fa';
 
 import { siteConfig } from '@/config/site';
 
@@ -85,7 +85,7 @@ export const Header = () => {
             <NavbarContent justify="start">
                 <NavbarBrand as={Link} href="/" className="flex items-center gap-2.5 cursor-pointer select-none">
                     <Image src="/favicon.png" alt="MyCourseReviews Logo" width={32} height={32} priority unoptimized className="hover:rotate-12 transition-transform duration-300 select-none" />
-                    <h1 className="font-mixtape tracking-tighter text-base sm:text-xl font-extrabold text-foreground select-none">
+                    <h1 className="font-mixtape tracking-tighter text-base sm:text-xl font-black text-foreground select-none">
                         MyCourseReviews
                     </h1>
                 </NavbarBrand>
@@ -102,17 +102,38 @@ export const Header = () => {
                             <Link
                                 href={item.href}
                                 className={clsx(
-                                    'font-mono tracking-wide text-xs uppercase font-extrabold px-3 py-1.5 border-2 transition-all duration-200 rounded-none block',
+                                    'font-mono tracking-wide text-xs uppercase font-extrabold px-3 py-1.5 border-2 border-foreground transition-all duration-200 rounded-none flex items-center gap-2',
                                     active 
-                                        ? 'bg-foreground text-background border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff]' 
-                                        : 'text-foreground border-transparent hover:border-foreground hover:bg-secondary hover:text-foreground hover:shadow-[3px_3px_0px_0px_#000] dark:hover:shadow-[3px_3px_0px_0px_#fff]'
+                                        ? item.href === '/courses'
+                                            ? 'bg-yellow text-black shadow-[3px_3px_0px_0px_#000]'
+                                            : item.href === '/'
+                                                ? 'bg-blue text-white shadow-[3px_3px_0px_0px_#000]'
+                                                : 'bg-foreground text-background shadow-[3px_3px_0px_0px_#000]'
+                                        : 'bg-background text-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:bg-yellow hover:text-black hover:shadow-[4px_4px_0px_0px_#000] dark:hover:shadow-[4px_4px_0px_0px_#fff] hover:translate-x-[-1px] hover:translate-y-[-1px]'
                                 )}
                             >
-                                {item.label}
+                                {item.href === '/courses' && <FaBookOpen className="text-sm shrink-0" />}
+                                <span>{item.label}</span>
                             </Link>
                         </NavbarItem>
                     );
                 })}
+                {mounted && session && (
+                    <NavbarItem key="/my-reviews">
+                        <Link
+                            href="/my-reviews"
+                            className={clsx(
+                                'font-mono tracking-wide text-xs uppercase font-extrabold px-3 py-1.5 border-2 border-foreground transition-all duration-200 rounded-none flex items-center gap-2',
+                                isActive('/my-reviews')
+                                    ? 'bg-red text-white shadow-[3px_3px_0px_0px_#000]' 
+                                    : 'bg-background text-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:bg-yellow hover:text-black hover:shadow-[4px_4px_0px_0px_#000] dark:hover:shadow-[4px_4px_0px_0px_#fff] hover:translate-x-[-1px] hover:translate-y-[-1px]'
+                            )}
+                        >
+                            <FaClipboardList className="text-sm shrink-0" />
+                            <span>My Reviews</span>
+                        </Link>
+                    </NavbarItem>
+                )}
             </NavbarContent>
 
             {/* Action Toolbar (Toggles, Guides, Auth) */}
@@ -136,7 +157,7 @@ export const Header = () => {
                                 setGuideStep(0);
                                 setIsGuideOpen(true);
                             }}
-                            className="bg-background border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] text-sm rounded-none transition-all duration-200 h-9 w-9 flex items-center justify-center cursor-pointer text-foreground"
+                            className="bg-background border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] text-sm rounded-none transition-all duration-200 h-9 w-9 min-w-9 p-0 flex items-center justify-center cursor-pointer text-foreground shrink-0"
                         >
                             <FaQuestion />
                         </Button>
@@ -158,7 +179,7 @@ export const Header = () => {
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="Give Feedback"
-                            className="bg-background border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] text-sm rounded-none transition-all duration-200 h-9 w-9 flex items-center justify-center text-foreground hover:bg-secondary cursor-pointer"
+                            className="bg-background border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] text-sm rounded-none transition-all duration-200 h-9 w-9 min-w-9 p-0 flex items-center justify-center text-foreground hover:bg-secondary cursor-pointer shrink-0"
                         >
                             <FaCommentAlt />
                         </a>
@@ -180,7 +201,7 @@ export const Header = () => {
                             variant="flat"
                             color="default"
                             onPress={toggleTheme}
-                            className="bg-background border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] text-lg rounded-none transition-all duration-200 h-9 w-9 flex items-center justify-center"
+                            className="bg-background border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] text-lg rounded-none transition-all duration-200 h-9 w-9 min-w-9 p-0 flex items-center justify-center shrink-0"
                         >
                             <span>
                                 {mounted && theme === 'dark' ? <FaSun className="text-white" /> : <FaMoon className="text-foreground" />}
@@ -207,7 +228,7 @@ export const Header = () => {
                                     variant="flat"
                                     onPress={() => signOut({ callbackUrl: '/' })}
                                     startContent={<FaSignOutAlt />}
-                                    className="font-mono text-xs uppercase font-black bg-hotpink text-white rounded-none border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:scale-105 active:scale-95 transition-all duration-200 h-9"
+                                    className="font-mono text-xs uppercase font-black bg-red text-white rounded-none border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:scale-105 active:scale-95 transition-all duration-200 h-9"
                                 >
                                     Logout
                                 </Button>
@@ -218,7 +239,7 @@ export const Header = () => {
                                 color="primary"
                                 onPress={() => signIn('keycloak')}
                                 startContent={<FaSignInAlt />}
-                                className="font-mono text-xs uppercase font-black bg-neongreen text-mixtapeblack rounded-none border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:scale-105 active:scale-95 transition-all duration-200 h-9"
+                                className="font-mono text-xs uppercase font-black bg-yellow text-black rounded-none border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:scale-105 active:scale-95 transition-all duration-200 h-9"
                             >
                                 Login
                             </Button>
@@ -232,7 +253,7 @@ export const Header = () => {
                 <NavbarItem className="sm:hidden flex items-center">
                     <NavbarMenuToggle 
                         aria-label={isMenuOpen ? "Close menu" : "Open menu"} 
-                        className="text-foreground border-2 border-foreground rounded-none hover:bg-secondary shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] transition-all h-9 w-9 flex items-center justify-center cursor-pointer bg-background"
+                        className="text-foreground border-2 border-foreground rounded-none hover:bg-secondary shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] transition-all h-10 w-10 min-w-10 p-2.5 flex items-center justify-center cursor-pointer bg-background shrink-0"
                     />
                 </NavbarItem>
             </NavbarContent>
@@ -249,7 +270,7 @@ export const Header = () => {
                                 setGuideStep(0);
                                 setIsGuideOpen(true);
                             }}
-                            className="w-full font-mono tracking-wide text-xs uppercase font-black px-4 py-3 border-2 border-foreground bg-background text-foreground hover:bg-secondary hover:shadow-[3px_3px_0px_0px_#000] dark:hover:shadow-[3px_3px_0px_0px_#fff] transition-all duration-200 rounded-none flex items-center justify-center gap-2 cursor-pointer"
+                            className="w-full font-mono tracking-wide text-xs uppercase font-black px-4 py-3 border-2 border-foreground bg-background text-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:bg-yellow hover:text-black hover:shadow-[4px_4px_0px_0px_#000] dark:hover:shadow-[4px_4px_0px_0px_#fff] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200 rounded-none flex items-center justify-center gap-2 cursor-pointer"
                         >
                             <FaQuestion className="text-sm shrink-0" />
                             <span>How to Use</span>
@@ -263,7 +284,7 @@ export const Header = () => {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={() => setIsMenuOpen(false)}
-                            className="w-full font-mono tracking-wide text-xs uppercase font-black px-4 py-3 border-2 border-foreground bg-background text-foreground hover:bg-secondary hover:shadow-[3px_3px_0px_0px_#000] dark:hover:shadow-[3px_3px_0px_0px_#fff] transition-all duration-200 rounded-none flex items-center justify-center gap-2"
+                            className="w-full font-mono tracking-wide text-xs uppercase font-black px-4 py-3 border-2 border-foreground bg-background text-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:bg-yellow hover:text-black hover:shadow-[4px_4px_0px_0px_#000] dark:hover:shadow-[4px_4px_0px_0px_#fff] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200 rounded-none flex items-center justify-center gap-2"
                         >
                             <FaCommentAlt className="text-sm shrink-0" />
                             <span>Feedback</span>
@@ -279,10 +300,10 @@ export const Header = () => {
                                     href={item.href}
                                     onClick={() => setIsMenuOpen(false)}
                                     className={clsx(
-                                        'font-mono tracking-wide text-xs uppercase font-black px-4 py-3 border-2 transition-all duration-200 rounded-none block text-center',
+                                        'font-mono tracking-wide text-xs uppercase font-black px-4 py-3 border-2 border-foreground transition-all duration-200 rounded-none block text-center',
                                         active
-                                            ? 'bg-foreground text-background border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff]'
-                                            : 'text-foreground border-foreground bg-background hover:bg-secondary hover:shadow-[3px_3px_0px_0px_#000] dark:hover:shadow-[3px_3px_0px_0px_#fff]'
+                                            ? 'bg-foreground text-background shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff]'
+                                            : 'bg-background text-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:bg-yellow hover:text-black hover:shadow-[4px_4px_0px_0px_#000] dark:hover:shadow-[4px_4px_0px_0px_#fff] hover:translate-x-[-1px] hover:translate-y-[-1px]'
                                     )}
                                 >
                                     {item.label}
@@ -290,6 +311,22 @@ export const Header = () => {
                             </NavbarMenuItem>
                         );
                     })}
+                    {mounted && session && (
+                        <NavbarMenuItem key="/my-reviews">
+                            <Link
+                                href="/my-reviews"
+                                onClick={() => setIsMenuOpen(false)}
+                                className={clsx(
+                                    'font-mono tracking-wide text-xs uppercase font-black px-4 py-3 border-2 border-foreground transition-all duration-200 rounded-none block text-center',
+                                    isActive('/my-reviews')
+                                        ? 'bg-foreground text-background shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff]'
+                                        : 'bg-background text-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:bg-yellow hover:text-black hover:shadow-[4px_4px_0px_0px_#000] dark:hover:shadow-[4px_4px_0px_0px_#fff] hover:translate-x-[-1px] hover:translate-y-[-1px]'
+                                )}
+                            >
+                                My Reviews
+                            </Link>
+                        </NavbarMenuItem>
+                    )}
                 </div>
 
                 <div className="border-t-2 border-dashed border-foreground/30 my-1" />
@@ -328,7 +365,7 @@ export const Header = () => {
                                         signOut({ callbackUrl: '/' });
                                     }}
                                     startContent={<FaSignOutAlt />}
-                                    className="w-full font-mono text-xs uppercase font-black bg-hotpink text-white rounded-none border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:scale-102 transition-all duration-200 h-10"
+                                    className="w-full font-mono text-xs uppercase font-black bg-red text-white rounded-none border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:scale-102 transition-all duration-200 h-10"
                                 >
                                     Logout
                                 </Button>
@@ -339,7 +376,7 @@ export const Header = () => {
                                         signIn('keycloak');
                                     }}
                                     startContent={<FaSignInAlt />}
-                                    className="w-full font-mono text-xs uppercase font-black bg-neongreen text-mixtapeblack rounded-none border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:scale-102 transition-all duration-200 h-10"
+                                    className="w-full font-mono text-xs uppercase font-black bg-yellow text-black rounded-none border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:scale-102 transition-all duration-200 h-10"
                                 >
                                     Login
                                 </Button>
@@ -362,7 +399,7 @@ export const Header = () => {
                 <ModalContent className="rounded-none">
                     {(onClose) => (
                         <>
-                            <ModalHeader className="font-mixtape uppercase tracking-tighter border-b-3 border-foreground px-4 sm:px-6 py-3 flex justify-between items-center bg-wrappedpurple text-white rounded-none gap-4">
+                            <ModalHeader className="font-mixtape uppercase tracking-tighter border-b-3 border-foreground px-4 sm:px-6 py-3 flex justify-between items-center bg-purple text-white rounded-none gap-4">
                                 <div className="flex flex-col gap-0.5 select-none">
                                     <span className="text-sm sm:text-base font-extrabold leading-none">HOW TO USE GUIDE</span>
                                     <span className="text-3xs font-mono font-normal tracking-wide opacity-80">STEP {guideStep + 1} OF 3</span>
@@ -376,11 +413,11 @@ export const Header = () => {
                             </ModalHeader>
                             <ModalBody className="p-6 flex flex-col gap-4 font-mono">
                                 {/* Step illustration/image placeholder */}
-                                <div className="h-44 w-full bg-wrappedlightgrey dark:bg-wrappedgrey border-2 border-foreground rounded-none flex flex-col items-center justify-center p-4 text-center select-none shadow-[inset_3px_3px_0px_0px_rgba(0,0,0,0.15)] relative overflow-hidden">
+                                <div className="h-44 w-full bg-lightgrey dark:bg-grey border-2 border-foreground rounded-none flex flex-col items-center justify-center p-4 text-center select-none shadow-[inset_3px_3px_0px_0px_rgba(0,0,0,0.15)] relative overflow-hidden">
                                     <div className="absolute top-2 left-2 text-3xs opacity-40 font-bold">PREVIEW_DECK</div>
                                     {guideStep === 0 && (
                                         <div className="flex flex-col items-center gap-2">
-                                            <div className="bg-wrappedyellow text-wrappedblack border-2 border-foreground font-black px-3 py-1 text-sm shadow-[2px_2px_0px_0px_#000] rotate-[-2deg]">
+                                            <div className="bg-yellow text-black border-2 border-foreground font-black px-3 py-1 text-sm shadow-[2px_2px_0px_0px_#000] rotate-[-2deg]">
                                                 MYCOURSEREVIEWS
                                             </div>
                                             <p className="text-[10px] uppercase font-bold text-foreground/60 max-w-[200px] mt-1 leading-tight">
@@ -390,7 +427,7 @@ export const Header = () => {
                                     )}
                                     {guideStep === 1 && (
                                         <div className="flex flex-col items-center gap-2">
-                                            <div className="bg-hotpink text-white border-2 border-foreground font-black px-3 py-1 text-sm shadow-[2px_2px_0px_0px_#000] rotate-[3deg]">
+                                            <div className="bg-red text-white border-2 border-foreground font-black px-3 py-1 text-sm shadow-[2px_2px_0px_0px_#000] rotate-[3deg]">
                                                 RATE COURSE
                                             </div>
                                             <p className="text-[10px] uppercase font-bold text-foreground/60 max-w-[200px] mt-1 leading-tight">
@@ -400,7 +437,7 @@ export const Header = () => {
                                     )}
                                     {guideStep === 2 && (
                                         <div className="flex flex-col items-center gap-2">
-                                            <div className="bg-wrappedblue text-white border-2 border-foreground font-black px-3 py-1 text-sm shadow-[2px_2px_0px_0px_#000] rotate-[-3deg]">
+                                            <div className="bg-blue text-white border-2 border-foreground font-black px-3 py-1 text-sm shadow-[2px_2px_0px_0px_#000] rotate-[-3deg]">
                                                 DISCUSS
                                             </div>
                                             <p className="text-[10px] uppercase font-bold text-foreground/60 max-w-[200px] mt-1 leading-tight">
@@ -468,7 +505,7 @@ export const Header = () => {
                                             size="sm"
                                             radius="none"
                                             onPress={() => setGuideStep(prev => prev + 1)}
-                                            className="font-mono text-2xs uppercase font-black bg-cyanaccent text-white border-2 border-foreground shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff]"
+                                            className="font-mono text-2xs uppercase font-black bg-blue text-white border-2 border-foreground shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff]"
                                         >
                                             Next
                                         </Button>
@@ -477,7 +514,7 @@ export const Header = () => {
                                             size="sm"
                                             radius="none"
                                             onPress={closeGuide}
-                                            className="font-mono text-2xs uppercase font-black bg-neongreen text-mixtapeblack border-2 border-foreground shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff]"
+                                            className="font-mono text-2xs uppercase font-black bg-yellow text-black border-2 border-foreground shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff]"
                                         >
                                             Let's Go!
                                         </Button>

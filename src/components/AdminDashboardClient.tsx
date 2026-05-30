@@ -39,7 +39,6 @@ interface ReviewItem {
     overallRating: number;
     isAnonymous: boolean;
     reviewerName: string;
-    reviewerEmail: string;
     createdAt: Date;
 }
 
@@ -65,8 +64,7 @@ export const AdminDashboardClient = ({ reviews, stats }: AdminDashboardClientPro
         return (
             r.courseCode.toLowerCase().includes(query) ||
             r.title.toLowerCase().includes(query) ||
-            r.reviewerName.toLowerCase().includes(query) ||
-            r.reviewerEmail.toLowerCase().includes(query)
+            r.reviewerName.toLowerCase().includes(query)
         );
     });
 
@@ -198,7 +196,6 @@ export const AdminDashboardClient = ({ reviews, stats }: AdminDashboardClientPro
                                     <TableCell className="text-2xs">
                                         <div className="flex flex-col gap-0.5">
                                             <span className="font-bold">{review.reviewerName}</span>
-                                            <span className="text-foreground/40">{review.reviewerEmail}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-xs max-w-sm">

@@ -14,11 +14,10 @@ import {
     Slider,
     Textarea,
 } from '@heroui/react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
-import { FaBookOpen, FaStar } from 'react-icons/fa';
 import { clsx } from 'clsx';
+import { MdStar } from 'react-icons/md';
 import { z } from 'zod';
 
 import { submitReview } from '@/app/actions/reviews';
@@ -28,14 +27,14 @@ const ReviewFormSchema = z.object({
     title: z.string().min(3, 'Title must be at least 3 characters').max(100),
     description: z.string().min(10, 'Description must be at least 10 characters').max(2000),
     overallRating: z.number().int().min(1).max(5),
-    difficultyScore: z.number().int().min(1).max(5),
-    usefulnessScore: z.number().int().min(1).max(5),
-    enjoymentScore: z.number().int().min(1).max(5),
+    difficultyScore: z.number().min(0.5).max(5),
+    usefulnessScore: z.number().min(0.5).max(5),
+    enjoymentScore: z.number().min(0.5).max(5),
     termTaken: z.string().min(1, 'Term Taken is required'),
     grade: z.string().optional(),
     isAnonymous: z.boolean().default(false),
     agreeToTerms: z.literal(true, {
-        message: 'You must agree to the Terms and Conditions',
+        message: 'You must agree to the Terms & Conditions',
     }),
 });
 
@@ -154,9 +153,9 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                 {(onClose) => (
                     <>
                         <ModalHeader className="flex flex-col gap-1 border-b-3 border-foreground px-6 py-4">
-                            <span className="font-mixtape text-xs uppercase font-extrabold text-mixtapeblack bg-neongreen border-2 border-foreground px-2 py-0.5 w-fit shadow-[2px_2px_0px_0px_#000] rotate-[-2deg] inline-block mb-1">{courseCode}</span>
+                            <span className="font-mixtape text-xs uppercase font-extrabold text-black bg-yellow border-2 border-foreground px-2 py-0.5 w-fit shadow-[2px_2px_0px_0px_#000] rotate-[-2deg] inline-block mb-1">{courseCode}</span>
                             <h2 className="font-mixtape uppercase text-xl font-extrabold tracking-tight">Review this Course</h2>
-                            <p className="font-scribble text-xs text-foreground/80 font-bold rotate-[0.5deg]">
+                            <p className="font-mono text-xs text-foreground/80 font-bold rotate-[0.5deg]">
                                 Help other Adelaide University students make informed choices by sharing your feedback.
                             </p>
                         </ModalHeader>
@@ -174,12 +173,15 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                 <label className="text-xs font-black uppercase text-foreground">Overall Star Rating</label>
                                 <div className="flex items-center gap-1.5 text-2xl">
                                     {[1, 2, 3, 4, 5].map((star) => (
-                                        <FaStar
+                                        <MdStar
                                             key={star}
                                             className={clsx(
-                                                'cursor-pointer transition-colors duration-200',
-                                                star <= (hoveredStar ?? overallRating) ? 'text-[#FAA307]' : 'text-foreground/20'
+                                                'w-6 h-6 cursor-pointer transition-colors duration-200',
+                                                star <= (hoveredStar ?? overallRating) ? '' : 'opacity-25 text-foreground'
                                             )}
+                                            fill={star <= (hoveredStar ?? overallRating) ? '#FAA307' : 'currentColor'}
+                                            stroke="black"
+                                            strokeWidth={1.2}
                                             onClick={() => setOverallRating(star)}
                                             onMouseEnter={() => setHoveredStar(star)}
                                             onMouseLeave={() => setHoveredStar(null)}
@@ -198,18 +200,25 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                 <div className="flex flex-col gap-1 font-mono">
                                     <Slider
                                         label="Difficulty"
-                                        size="sm"
+                                        size="md"
                                         radius="none"
-                                        step={1}
+                                        step={0.5}
                                         maxValue={5}
-                                        minValue={1}
+                                        minValue={0.5}
                                         value={difficultyScore}
                                         onChange={(val) => setDifficultyScore(val as number)}
-                                        color="danger"
                                         aria-label="Difficulty slider score"
+                                        className="w-full"
+                                        classNames={{
+                                            track: "border-2 border-foreground h-3 rounded-none bg-foreground/5 dark:bg-foreground/15",
+                                            filler: "bg-red border-r-2 border-foreground rounded-none",
+                                            thumb: "rounded-none w-4 h-6 bg-white dark:bg-black border-2 border-foreground shadow-[2px_2px_0px_0px_#000] after:hidden group-data-[dragging=true]:scale-105 transition-all cursor-grab active:cursor-grabbing",
+                                            label: "text-foreground font-mixtape font-bold text-xs uppercase",
+                                            value: "text-foreground font-mono font-black text-xs",
+                                        }}
                                     />
-                                    <span className="text-[10px] text-foreground/50 text-right font-semibold">
-                                        {difficultyScore === 5 ? 'Extreme' : difficultyScore === 1 ? 'Trivial' : 'Medium'}
+                                    <span className="text-[10px] text-foreground/60 text-right font-mono font-black uppercase tracking-wider mt-1">
+                                        {difficultyScore >= 4.5 ? 'Extreme' : difficultyScore >= 3.5 ? 'Hard' : difficultyScore >= 2.5 ? 'Medium' : difficultyScore >= 1.5 ? 'Easy' : 'Trivial'}
                                     </span>
                                 </div>
 
@@ -217,18 +226,25 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                 <div className="flex flex-col gap-1 font-mono">
                                     <Slider
                                         label="Usefulness"
-                                        size="sm"
+                                        size="md"
                                         radius="none"
-                                        step={1}
+                                        step={0.5}
                                         maxValue={5}
-                                        minValue={1}
+                                        minValue={0.5}
                                         value={usefulnessScore}
                                         onChange={(val) => setUsefulnessScore(val as number)}
-                                        color="secondary"
                                         aria-label="Usefulness slider score"
+                                        className="w-full"
+                                        classNames={{
+                                            track: "border-2 border-foreground h-3 rounded-none bg-foreground/5 dark:bg-foreground/15",
+                                            filler: "bg-blue border-r-2 border-foreground rounded-none",
+                                            thumb: "rounded-none w-4 h-6 bg-white dark:bg-black border-2 border-foreground shadow-[2px_2px_0px_0px_#000] after:hidden group-data-[dragging=true]:scale-105 transition-all cursor-grab active:cursor-grabbing",
+                                            label: "text-foreground font-mixtape font-bold text-xs uppercase",
+                                            value: "text-foreground font-mono font-black text-xs",
+                                        }}
                                     />
-                                    <span className="text-[10px] text-foreground/50 text-right font-semibold">
-                                        {usefulnessScore === 5 ? 'Crucial' : usefulnessScore === 1 ? 'Useless' : 'Helpful'}
+                                    <span className="text-[10px] text-foreground/60 text-right font-mono font-black uppercase tracking-wider mt-1">
+                                        {usefulnessScore >= 4.5 ? 'Crucial' : usefulnessScore >= 3.5 ? 'Very Useful' : usefulnessScore >= 2.5 ? 'Useful' : usefulnessScore >= 1.5 ? 'Slightly Useful' : 'Useless'}
                                     </span>
                                 </div>
 
@@ -236,18 +252,25 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                 <div className="flex flex-col gap-1 font-mono">
                                     <Slider
                                         label="Enjoyment"
-                                        size="sm"
+                                        size="md"
                                         radius="none"
-                                        step={1}
+                                        step={0.5}
                                         maxValue={5}
-                                        minValue={1}
+                                        minValue={0.5}
                                         value={enjoymentScore}
                                         onChange={(val) => setEnjoymentScore(val as number)}
-                                        color="primary"
                                         aria-label="Enjoyment slider score"
+                                        className="w-full"
+                                        classNames={{
+                                            track: "border-2 border-foreground h-3 rounded-none bg-foreground/5 dark:bg-foreground/15",
+                                            filler: "bg-yellow border-r-2 border-foreground rounded-none",
+                                            thumb: "rounded-none w-4 h-6 bg-white dark:bg-black border-2 border-foreground shadow-[2px_2px_0px_0px_#000] after:hidden group-data-[dragging=true]:scale-105 transition-all cursor-grab active:cursor-grabbing",
+                                            label: "text-foreground font-mixtape font-bold text-xs uppercase",
+                                            value: "text-foreground font-mono font-black text-xs",
+                                        }}
                                     />
-                                    <span className="text-[10px] text-foreground/50 text-right font-semibold">
-                                        {enjoymentScore === 5 ? 'Love it' : enjoymentScore === 1 ? 'Hated it' : 'Fun'}
+                                    <span className="text-[10px] text-foreground/60 text-right font-mono font-black uppercase tracking-wider mt-1">
+                                        {enjoymentScore >= 4.5 ? 'Love it' : enjoymentScore >= 3.5 ? 'Great' : enjoymentScore >= 2.5 ? 'Fun' : enjoymentScore >= 1.5 ? 'Okay' : 'Hated it'}
                                     </span>
                                 </div>
                             </div>
@@ -264,10 +287,25 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                         errorMessage={errors.termTaken}
                                         isInvalid={!!errors.termTaken}
                                         aria-label="Select term taken"
-                                        className="font-mono border-2 border-foreground bg-background"
+                                        className="font-mono"
+                                        classNames={{
+                                            trigger: "border-2 border-foreground bg-background rounded-none shadow-none text-foreground",
+                                            value: "text-foreground font-mono data-[placeholder=true]:text-grey dark:data-[placeholder=true]:text-grey",
+                                        }}
+                                        popoverProps={{
+                                            classNames: {
+                                                base: "rounded-none",
+                                                content: "rounded-none border-3 border-foreground bg-background text-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] p-1"
+                                            }
+                                        }}
+                                        listboxProps={{
+                                            itemClasses: {
+                                                base: "rounded-none data-[hover=true]:bg-secondary data-[hover=true]:text-white font-mono text-xs",
+                                            }
+                                        }}
                                     >
                                         {termsOptions.map((term) => (
-                                            <SelectItem key={term} textValue={term} className="font-mono text-xs">{term}</SelectItem>
+                                            <SelectItem key={term} textValue={term} className="font-mono text-xs rounded-none">{term}</SelectItem>
                                         ))}
                                     </Select>
                                 </div>
@@ -280,10 +318,25 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                         selectedKeys={grade ? [grade] : []}
                                         onSelectionChange={(keys) => setGrade(Array.from(keys)[0] as string)}
                                         aria-label="Select grade achieved"
-                                        className="font-mono border-2 border-foreground bg-background"
+                                        className="font-mono"
+                                        classNames={{
+                                            trigger: "border-2 border-foreground bg-background rounded-none shadow-none text-foreground",
+                                            value: "text-foreground font-mono data-[placeholder=true]:text-grey dark:data-[placeholder=true]:text-grey",
+                                        }}
+                                        popoverProps={{
+                                            classNames: {
+                                                base: "rounded-none",
+                                                content: "rounded-none border-3 border-foreground bg-background text-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] p-1"
+                                            }
+                                        }}
+                                        listboxProps={{
+                                            itemClasses: {
+                                                base: "rounded-none data-[hover=true]:bg-secondary data-[hover=true]:text-white font-mono text-xs",
+                                            }
+                                        }}
                                     >
                                         {gradeOptions.map((g) => (
-                                            <SelectItem key={g.value} textValue={g.label} className="font-mono text-xs">{g.label}</SelectItem>
+                                            <SelectItem key={g.value} textValue={g.label} className="font-mono text-xs rounded-none">{g.label}</SelectItem>
                                         ))}
                                     </Select>
                                 </div>
@@ -299,7 +352,11 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                     onValueChange={setTitle}
                                     isInvalid={!!errors.title}
                                     errorMessage={errors.title}
-                                    className="font-mono border-2 border-foreground"
+                                    className="font-mono"
+                                    classNames={{
+                                        inputWrapper: "border-2 border-foreground bg-background rounded-none shadow-none group-data-[focus=true]:border-foreground",
+                                        input: "placeholder:text-grey dark:placeholder:text-grey text-foreground",
+                                    }}
                                 />
                             </div>
 
@@ -314,7 +371,11 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                     isInvalid={!!errors.description}
                                     errorMessage={errors.description}
                                     minRows={4}
-                                    className="font-mono border-2 border-foreground"
+                                    className="font-mono"
+                                    classNames={{
+                                        inputWrapper: "border-2 border-foreground bg-background rounded-none shadow-none group-data-[focus=true]:border-foreground",
+                                        input: "placeholder:text-grey dark:placeholder:text-grey text-foreground",
+                                    }}
                                 />
                             </div>
 
@@ -343,15 +404,18 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                     radius="none"
                                     className="rounded-none font-bold text-2xs uppercase"
                                 >
-                                    <div className="flex items-center gap-1 ml-1 text-foreground/75">
+                                    <div className="flex items-center gap-1 ml-1 text-foreground/75 font-mono text-2xs uppercase font-extrabold">
                                         I agree to the{' '}
                                         <span 
-                                            onClick={() => setIsTermsOpen(true)} 
-                                            className="text-hotpink font-extrabold hover:underline cursor-pointer select-none"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setIsTermsOpen(true);
+                                            }} 
+                                            className="text-red font-extrabold hover:underline cursor-pointer select-none"
                                         >
-                                            Terms
-                                        </span>{' '}
-                                        policies.
+                                            Terms & Conditions
+                                        </span>
                                     </div>
                                 </Checkbox>
                                 {errors.agreeToTerms && (
@@ -368,8 +432,14 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                             <Button
                                 radius="none"
                                 isLoading={isPending}
+                                isDisabled={!agreeToTerms}
                                 onPress={() => handleSubmit(onClose)}
-                                className="font-mono text-xs uppercase font-black bg-neongreen text-mixtapeblack border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff]"
+                                className={clsx(
+                                    "font-mono text-xs uppercase font-black border-2 border-foreground transition-all",
+                                    agreeToTerms 
+                                        ? "bg-yellow text-black shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#000] dark:hover:shadow-[4px_4px_0px_0px_#fff] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_#000] dark:active:shadow-[2px_2px_0px_0px_#fff]" 
+                                        : "bg-grey/30 text-foreground/40 cursor-not-allowed opacity-50 shadow-none border-dashed"
+                                )}
                             >
                                 Submit Review
                             </Button>
@@ -384,7 +454,7 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                 className="bg-background border-4 border-foreground text-foreground rounded-none shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] z-[100]"
             >
                 <ModalContent className="rounded-none">
-                    <ModalHeader className="font-mixtape uppercase tracking-tighter text-xl border-b-3 border-foreground px-6 py-4">Terms</ModalHeader>
+                    <ModalHeader className="font-mixtape uppercase tracking-tighter text-xl border-b-3 border-foreground px-6 py-4">Terms & Conditions</ModalHeader>
                     <ModalBody className="p-6 font-mono text-sm leading-relaxed max-h-[400px] overflow-y-auto">
                         <p className="font-bold border-l-3 border-primary pl-3 text-foreground py-0.5 mb-3">
                             By using our services, submitting ratings, or registering, you agree to the following terms of use:

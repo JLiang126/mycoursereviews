@@ -3,6 +3,10 @@
 @import "tailwindcss";
 @config "../../tailwind.config.js";
 
+body {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
 /* Custom utility styles for DIY Analog mixtape textures & aesthetics */
 @layer utilities {
   .text-stroke-thick {
@@ -53,4 +57,42 @@
     background-size: 16px 16px;
     background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
   }
+}
+
+@keyframes customPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03) rotate(0.5deg);
+  }
+}
+
+.animate-pulse-custom {
+  animation: customPulse 2.4s infinite ease-in-out;
+}
+
+/* Bulletproof Global Placeholder Color Overrides */
+::placeholder,
+input::placeholder,
+textarea::placeholder,
+.placeholder\:text-grey::placeholder {
+  color: #7F7F7F !important;
+  opacity: 1 !important; /* Overrides Firefox opacity defaults */
+}
+
+/* HeroUI Select Placeholder text */
+button[data-has-value="false"] span,
+button[data-has-value="false"] [data-slot="value"],
+button[data-has-value="false"] [class*="text-foreground-"],
+button[data-has-value="false"] [class*="text-default-"] {
+  color: #7F7F7F !important;
+  opacity: 1 !important;
+}
+
+/* Remove black outlines from transparent helper paths/rects in react-icons */
+svg path[fill="none"],
+svg rect[fill="none"],
+svg [fill="transparent"] {
+  stroke: none !important;
 }

@@ -30,6 +30,7 @@ export interface CourseData {
     subjectName?: string | null;
     apiId?: string | null;
     universityWideElective?: boolean | null;
+    isNoLongerOffered?: boolean | null;
 }
 
 // Robust fallback course mocks for developer ease & server safety
@@ -110,29 +111,16 @@ function getSubjectNameFromCodePrefix(codePrefix: string): string | null {
 
 export const CoursesApiClient = {
     /**
-     * Retrieves the entire list of Adelaide University courses by querying
-     * the Courses API endpoints with required parameters.
-     * Respects 24-hour cache limit in Redis.
+     * Internal helper to fetch all courses from Adelaide University API in the background.
+     * Prevents client blockages and populates Redis cache asynchronously.
      */
-    async getAllCourses(): Promise<CourseData[]> {
+    async prefetchAllCoursesInBackground(): Promise<void> {
         const cacheKey = 'courses:all';
-
-        try {
-            // Check Redis Cache
-            const cachedData = await redis.get(cacheKey);
-            if (cachedData) {
-                return JSON.parse(cachedData) as CourseData[];
-            }
-        } catch (error) {
-            console.error('Redis cache lookup error:', error);
-        }
-
         const headers = {
             'Accept': 'application/json',
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         };
 
-        // Standard subjects, terms, and year to fetch from the Adelaide University API
         const year = 2026;
         const defaultTargetSubjects = [
             'Computer Science',
@@ -147,7 +135,6 @@ export const CoursesApiClient = {
 
         let subjects = [...defaultTargetSubjects];
 
-        // Adelaide University term alias mapping (compsci-adl TERMS standard)
         const termQueries = [
             { alias: 'sem1', displayName: 'Semester 1' },
             { alias: 'sem2', displayName: 'Semester 2' },
@@ -157,7 +144,7 @@ export const CoursesApiClient = {
 
         const coursesMap = new Map<string, CourseData>();
 
-        console.log('Fetching course list from external Courses API...');
+        console.log('Background Courses API Fetch: query starting...');
 
         try {
             // Query subjects endpoint first to match and normalize dynamic outlines
@@ -176,7 +163,7 @@ export const CoursesApiClient = {
                     }
                 }
             } catch (subjectsError) {
-                console.warn('Failed to query dynamic subjects list, using default lists:', subjectsError);
+                console.warn('Background Courses API Fetch: subjects outline failed, using default list:', subjectsError);
             }
 
             // Create flat list of query tasks to fetch
@@ -216,10 +203,6 @@ export const CoursesApiClient = {
                                     // Map full subject names dynamically to standard Adelaide Uni abbreviations
                                     const mappedSub = getSubjectAbbreviation(sub);
 
-                                    // Resolve course codes intelligently:
-                                    // If the catalog code already contains letters (e.g., ARTI2001), it represents the 
-                                    // full course code and doesn't need to be prefixed by the subject abbreviation.
-                                    // Otherwise, we prefix it (e.g., COMP SCI 1102).
                                     let code = '';
                                     if (/[A-Za-z]/.test(catalogCode)) {
                                         code = catalogCode.replace(/_/g, ' ').trim();
@@ -229,8 +212,6 @@ export const CoursesApiClient = {
 
                                     if (!code) continue;
                                     const normalizedCode = code.toUpperCase();
-
-                                    // Construct readable, pretty term lists
                                     const displayTerm = task.termQuery.displayName;
 
                                     if (coursesMap.has(normalizedCode)) {
@@ -252,7 +233,7 @@ export const CoursesApiClient = {
                                 }
                             }
                         } catch (innerError) {
-                            console.warn(`Failed to fetch for subject: ${task.subject}, term alias: ${task.termQuery.alias}. Error:`, innerError);
+                            console.warn(`Background Courses API Fetch: failed for subject: ${task.subject}, term: ${task.termQuery.alias}:`, innerError);
                         }
                     })
                 );
@@ -260,18 +241,59 @@ export const CoursesApiClient = {
 
             if (coursesMap.size > 0) {
                 const data = Array.from(coursesMap.values());
-
                 // Write into Redis (24-hour TTL)
                 await redis.set(cacheKey, JSON.stringify(data), 'EX', 86400);
-                return data;
+                console.log(`Background Courses API Fetch: completed. Cached ${data.length} courses.`);
             } else {
-                console.warn('Courses API returned 0 courses. Using fallback outlines.');
+                console.warn('Background Courses API Fetch: courses endpoint returned 0 outlines.');
             }
         } catch (error) {
-            console.error('Failed to fetch from Courses API, using fallbacks:', error);
+            console.error('Background Courses API Fetch: top-level process failed:', error);
+        }
+    },
+
+    /**
+     * Retrieves the entire list of Adelaide University courses.
+     * Checks Redis cache for instant low-latency delivery.
+     * If a cache miss occurs, triggers a background fetch thread and returns the fast fallback outline list immediately to avoid page load stalls.
+     */
+    async getAllCourses(): Promise<CourseData[]> {
+        const cacheKey = 'courses:all';
+
+        try {
+            // Check Redis Cache
+            const cachedData = await redis.get(cacheKey);
+            if (cachedData) {
+                return JSON.parse(cachedData) as CourseData[];
+            }
+        } catch (error) {
+            console.error('Redis cache lookup error:', error);
         }
 
-        // Return fallback data if service is offline/unreachable
+        // Cache miss: Trigger asynchronous background prefetch if lock is not present
+        const lockKey = 'courses:prefetch_lock';
+        
+        // Execute background fetch asynchronously
+        (async () => {
+            try {
+                const isLocked = await redis.get(lockKey);
+                if (!isLocked) {
+                    // Set lock for 5 minutes
+                    await redis.set(lockKey, 'true', 'EX', 300);
+                    console.log('Cache miss for courses. Triggering background prefetch task...');
+                    
+                    this.prefetchAllCoursesInBackground()
+                        .catch((err) => console.error('Error during background prefetch:', err))
+                        .finally(async () => {
+                            await redis.del(lockKey);
+                        });
+                }
+            } catch (err) {
+                console.error('Error acquiring background prefetch lock:', err);
+            }
+        })();
+
+        // Return fallbacks instantly to prevent page stall!
         return FALLBACK_COURSES;
     },
 

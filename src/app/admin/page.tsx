@@ -68,7 +68,6 @@ export default async function AdminPage() {
                 isAnonymous: reviews.isAnonymous,
                 createdAt: reviews.createdAt,
                 reviewerName: users.name,
-                reviewerEmail: users.email,
             })
             .from(reviews)
             .leftJoin(users, eq(reviews.userId, users.id))
@@ -80,7 +79,6 @@ export default async function AdminPage() {
     const formattedReviews = allReviews.map((r) => ({
         ...r,
         reviewerName: r.reviewerName || 'Unknown Identity',
-        reviewerEmail: r.reviewerEmail || 'unknown@csclub.org.au',
     }));
 
     const stats = {

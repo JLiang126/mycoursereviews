@@ -29,25 +29,25 @@ const SOCIAL_LINKS = [
 const FOOTER_SECTIONS = [
     {
         title: 'About',
-        bgClass: 'bg-neonyellow text-mixtapeblack',
+        bgClass: 'bg-yellow text-black',
         content:
             "MyCourseReviews is the Adelaide University Computer Science Club's course outlines and review portal. Built by students, for students, it provides a transparent, secure platform that allows university peers to cast ratings easily on difficulty, usefulness, and enjoyment metrics, helping students explore their study pathways.",
     },
     {
         title: 'Disclaimer',
-        bgClass: 'bg-neongreen text-mixtapeblack',
+        bgClass: 'bg-yellow text-black',
         content:
             "MyCourseReviews is a student-run repository developed by the Computer Science Club. The club is an independent student organization and does not officially represent the Adelaide University, Faculty, or School. Ratings and reviews express the subjective experiences of individual authors, and course information is subject to change.",
     },
     {
         title: 'Privacy',
-        bgClass: 'bg-hotpink text-white',
+        bgClass: 'bg-red text-white',
         content:
             "MyCourseReviews secures all user logins through the CS Club authentication system. Although reviews can be published anonymously on the public frontend, user Keycloak sub identifiers are safely stored in our database for moderation, accountability, and anti-spam protection. We do not share or trade student identity details.",
     },
     {
-        title: 'Terms',
-        bgClass: 'bg-cyanaccent text-white',
+        title: 'Terms & Conditions',
+        bgClass: 'bg-blue text-white',
         content:
             "By using MyCourseReviews, you agree to comply with our Code of Conduct: reviews must comply with the Adelaide University Student Charter, remaining respectful, fair, and constructive. We strictly prohibit fake content, spam, off-topic, offensive, or malicious submissions. Tutors and coordinators are barred from reviewing semesters in which they taught, and personal information or harassment is strictly forbidden.",
     },
@@ -75,13 +75,13 @@ export const Footer = () => {
     const [openModal, setOpenModal] = useState<string | null>(null);
 
     return (
-        <footer className="w-full mt-12 bg-background border-4 border-foreground p-6 sm:p-8 rounded-none shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff] max-w-screen-xl mx-auto">
-            <div className="grid grid-cols-2 items-center gap-6 mobile:grid-cols-1 mobile:justify-items-center mobile:gap-8">
+        <footer className="w-full mt-12 bg-background border-t-4 border-foreground py-8">
+            <div className="max-w-screen-xl mx-auto px-6 sm:px-8 grid grid-cols-2 items-center gap-6 mobile:grid-cols-1 mobile:justify-items-center mobile:gap-8">
                 
                 {/* Logo and Brand Title */}
                 <div className="flex items-center gap-3">
                     <Image src="/favicon.png" alt="CS Club Logo" width={40} height={40} priority unoptimized className="hover:rotate-12 transition-transform duration-300 select-none" />
-                    <h1 className="text-lg font-mixtape font-black tracking-tight text-foreground select-none">
+                    <h1 className="text-lg sm:text-xl font-mixtape font-black tracking-tighter text-foreground select-none">
                         MyCourseReviews
                     </h1>
                 </div>
@@ -112,7 +112,7 @@ export const Footer = () => {
                         <a
                             href={link}
                             key={i}
-                            className="p-1.5 border-2 border-foreground rounded-none bg-background text-foreground shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff] hover:bg-neongreen hover:text-mixtapeblack hover:rotate-6 hover:-translate-y-0.5 transition-all duration-150"
+                            className="p-1.5 border-2 border-foreground rounded-none bg-background text-foreground shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff] hover:bg-yellow hover:text-black hover:rotate-6 hover:-translate-y-0.5 transition-all duration-150"
                             target="_blank"
                             rel="noopener noreferrer"
                         >

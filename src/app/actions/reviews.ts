@@ -6,8 +6,7 @@ import { z } from 'zod';
 
 import { auth } from '@/auth';
 import { db } from '@/db';
-import { comments, courses, likes, reviews, users } from '@/db/schema';
-import { CoursesApiClient } from '@/lib/courses-api';
+import { comments, likes, reviews, users } from '@/db/schema';
 
 // Zod Schema to validate Review submissions
 const ReviewSchema = z.object({
@@ -15,14 +14,14 @@ const ReviewSchema = z.object({
     title: z.string().min(3, 'Title must be at least 3 characters').max(100),
     description: z.string().min(10, 'Review description must be at least 10 characters').max(2000),
     overallRating: z.number().int().min(1).max(5),
-    difficultyScore: z.number().int().min(1).max(5),
-    usefulnessScore: z.number().int().min(1).max(5),
-    enjoymentScore: z.number().int().min(1).max(5),
+    difficultyScore: z.number().min(0.5).max(5),
+    usefulnessScore: z.number().min(0.5).max(5),
+    enjoymentScore: z.number().min(0.5).max(5),
     termTaken: z.string().min(1, 'Term Taken is required'),
     grade: z.string().optional(),
     isAnonymous: z.boolean().default(false),
     agreeToTerms: z.literal(true, {
-        message: 'You must agree to the Terms and Conditions',
+        message: 'You must agree to the Terms & Conditions',
     }),
 });
 
@@ -45,48 +44,14 @@ export async function submitReview(input: ReviewInput) {
     await db.insert(users).values({
         id: session.user.id,
         name: session.user.name || 'Adelaide Student',
-        email: session.user.email || '',
-        image: session.user.image || null,
         role: session.user.role || 'user',
     }).onConflictDoUpdate({
         target: users.id,
         set: {
             name: session.user.name || 'Adelaide Student',
-            email: session.user.email || '',
-            image: session.user.image || null,
             role: session.user.role || 'user',
         },
     });
-
-    // Make sure the course exists in our local pg cache table (FK reference constraint)
-    const localCourse = await db.query.courses.findFirst({
-        where: eq(courses.code, validated.courseCode),
-    });
-
-    if (!localCourse) {
-        // Fetch from Courses API to populate local cache before inserting review (FK constraint)
-        const courseData = await CoursesApiClient.getCourseByCode(validated.courseCode);
-        if (courseData) {
-            await db.insert(courses).values({
-                code: courseData.code,
-                name: courseData.name,
-                description: courseData.description,
-                terms: JSON.stringify(courseData.terms),
-                officialLink: courseData.officialLink,
-            });
-        } else {
-            // Course outline not in API — insert a minimal placeholder to satisfy FK constraint.
-            // This ensures students can still review courses even when API data is unavailable.
-            console.warn(`Course outline not found via API for code: ${validated.courseCode}. Inserting placeholder.`);
-            await db.insert(courses).values({
-                code: validated.courseCode,
-                name: validated.courseCode,
-                description: '',
-                terms: JSON.stringify([]),
-                officialLink: '',
-            });
-        }
-    }
 
     // Insert new review
     await db.insert(reviews).values({
@@ -124,14 +89,12 @@ export async function toggleLike(reviewId: string) {
     await db.insert(users).values({
         id: userId,
         name: session.user.name || 'Adelaide Student',
-        email: session.user.email || '',
-        image: session.user.image || null,
         role: session.user.role || 'user',
     }).onConflictDoUpdate({
         target: users.id,
         set: {
             name: session.user.name || 'Adelaide Student',
-            email: session.user.email || '',
+            role: session.user.role || 'user',
         },
     });
 
@@ -182,14 +145,12 @@ export async function addComment(reviewId: string, content: string, parentId?: s
     await db.insert(users).values({
         id: session.user.id,
         name: session.user.name || 'Adelaide Student',
-        email: session.user.email || '',
-        image: session.user.image || null,
         role: session.user.role || 'user',
     }).onConflictDoUpdate({
         target: users.id,
         set: {
             name: session.user.name || 'Adelaide Student',
-            email: session.user.email || '',
+            role: session.user.role || 'user',
         },
     });
 
@@ -212,12 +173,12 @@ export async function addComment(reviewId: string, content: string, parentId?: s
 }
 
 /**
- * Server Action to delete a review (committee admin-only moderation trigger)
+ * Delete a review (accessible by review owner or admin)
  */
 export async function deleteReview(reviewId: string) {
     const session = await auth();
-    if (session?.user?.role !== 'admin') {
-        throw new Error('Forbidden: Only members of the CS Club committee can moderate reviews.');
+    if (!session?.user?.id) {
+        throw new Error('Unauthorized: Log in to delete reviews.');
     }
 
     // Find courseCode for path revalidation
@@ -229,12 +190,158 @@ export async function deleteReview(reviewId: string) {
         throw new Error('Review not found.');
     }
 
+    const isUserAdmin = session.user.role === 'admin';
+    const isOwner = review.userId === session.user.id;
+
+    if (!isUserAdmin && !isOwner) {
+        throw new Error('Forbidden: You can only delete reviews you wrote.');
+    }
+
     // Cascades comments/likes automatically due to schema constraints
     await db.delete(reviews).where(eq(reviews.id, reviewId));
 
     revalidatePath(`/courses/${encodeURIComponent(review.courseCode)}`);
     revalidatePath('/courses');
     revalidatePath('/admin');
+    revalidatePath('/my-reviews');
+
+    return { success: true };
+}
+
+/**
+ * Delete a comment (accessible by review owner or admin)
+ */
+export async function deleteComment(commentId: string) {
+    const session = await auth();
+    if (!session?.user?.id) {
+        throw new Error('Unauthorized: Log in to delete comments.');
+    }
+
+    const comment = await db.query.comments.findFirst({
+        where: eq(comments.id, commentId),
+    });
+
+    if (!comment) {
+        throw new Error('Comment not found.');
+    }
+
+    const review = await db.query.reviews.findFirst({
+        where: eq(reviews.id, comment.reviewId),
+    });
+
+    const isUserAdmin = session.user.role === 'admin';
+    const isOwner = comment.userId === session.user.id;
+
+    if (!isUserAdmin && !isOwner) {
+        throw new Error('Forbidden: You can only delete comments you wrote.');
+    }
+
+    await db.delete(comments).where(eq(comments.id, commentId));
+
+    if (review) {
+        revalidatePath(`/courses/${encodeURIComponent(review.courseCode)}`);
+    }
+    revalidatePath('/my-reviews');
+
+    return { success: true };
+}
+
+// Schema to validate Update Review submissions
+const UpdateReviewSchema = z.object({
+    title: z.string().min(3, 'Title must be at least 3 characters').max(100),
+    description: z.string().min(10, 'Review description must be at least 10 characters').max(2000),
+    overallRating: z.number().int().min(1).max(5),
+    difficultyScore: z.number().min(0.5).max(5),
+    usefulnessScore: z.number().min(0.5).max(5),
+    enjoymentScore: z.number().min(0.5).max(5),
+    termTaken: z.string().min(1, 'Term Taken is required'),
+    grade: z.string().optional(),
+    isAnonymous: z.boolean().default(false),
+});
+
+/**
+ * Update a review (accessible by review owner only)
+ */
+export async function updateReview(reviewId: string, input: z.infer<typeof UpdateReviewSchema>) {
+    const session = await auth();
+    if (!session?.user?.id) {
+        throw new Error('Unauthorized: Log in to update reviews.');
+    }
+
+    const validated = UpdateReviewSchema.parse(input);
+
+    const review = await db.query.reviews.findFirst({
+        where: eq(reviews.id, reviewId),
+    });
+
+    if (!review) {
+        throw new Error('Review not found.');
+    }
+
+    if (review.userId !== session.user.id) {
+        throw new Error('Forbidden: You can only edit reviews you wrote.');
+    }
+
+    await db.update(reviews)
+        .set({
+            title: validated.title,
+            description: validated.description,
+            overallRating: validated.overallRating,
+            difficultyScore: validated.difficultyScore,
+            usefulnessScore: validated.usefulnessScore,
+            enjoymentScore: validated.enjoymentScore,
+            termTaken: validated.termTaken,
+            grade: validated.grade || null,
+            isAnonymous: validated.isAnonymous,
+        })
+        .where(eq(reviews.id, reviewId));
+
+    revalidatePath(`/courses/${encodeURIComponent(review.courseCode)}`);
+    revalidatePath('/courses');
+    revalidatePath('/my-reviews');
+
+    return { success: true };
+}
+
+/**
+ * Update a comment (accessible by review owner only)
+ */
+export async function updateComment(commentId: string, content: string) {
+    const session = await auth();
+    if (!session?.user?.id) {
+        throw new Error('Unauthorized: Log in to update comments.');
+    }
+
+    if (!content || content.trim().length === 0) {
+        throw new Error('Comment content cannot be empty.');
+    }
+
+    const comment = await db.query.comments.findFirst({
+        where: eq(comments.id, commentId),
+    });
+
+    if (!comment) {
+        throw new Error('Comment not found.');
+    }
+
+    if (comment.userId !== session.user.id) {
+        throw new Error('Forbidden: You can only edit comments you wrote.');
+    }
+
+    await db.update(comments)
+        .set({
+            content: content.trim(),
+        })
+        .where(eq(comments.id, commentId));
+
+    const review = await db.query.reviews.findFirst({
+        where: eq(reviews.id, comment.reviewId),
+    });
+
+    if (review) {
+        revalidatePath(`/courses/${encodeURIComponent(review.courseCode)}`);
+    }
+    revalidatePath('/my-reviews');
 
     return { success: true };
 }

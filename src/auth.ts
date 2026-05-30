@@ -63,16 +63,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     .values({
                         id: user.id,
                         name: user.name || 'Adelaide Student',
-                        email: user.email,
-                        image: user.image,
                         role: role,
                     })
                     .onConflictDoUpdate({
                         target: users.id,
                         set: {
                             name: user.name || 'Adelaide Student',
-                            email: user.email,
-                            image: user.image,
                             role: role,
                         },
                     });

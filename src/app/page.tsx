@@ -10,8 +10,8 @@ import {
     FaArrowRight,
     FaComments,
     FaSearch,
-    FaStar,
 } from 'react-icons/fa';
+import { MdStar } from 'react-icons/md';
 
 export default function WelcomePage() {
     const { data: session, status } = useSession();
@@ -48,8 +48,8 @@ export default function WelcomePage() {
             
             const angle = (i * (360 / 28) * Math.PI) / 180;
             
-            const tx = `${Math.cos(angle) * (10 + Math.random() * 20)}vw`;
-            const ty = `${Math.sin(angle) * (70 + Math.random() * 160)}px`;
+            const tx = `${Math.cos(angle) * (15 + Math.random() * 28)}vw`;
+            const ty = `${Math.sin(angle) * (80 + Math.random() * 180)}px`;
             
             const scale = 0.55 + Math.random() * 0.4;
             const rotation = -12 + Math.random() * 24;
@@ -76,10 +76,10 @@ export default function WelcomePage() {
         <div className="flex flex-col gap-16">
             
             {/* Hero Section */}
-            <section className="relative flex flex-col items-center justify-center text-center mx-[-1.5rem] sm:mx-[-2rem] px-4 pb-20 pt-16 min-h-[580px] isolate w-[calc(100%+3rem)] sm:w-[calc(100%+4rem)] bg-grid-sheet border-b-4 border-foreground overflow-hidden">
+            <section className="relative flex flex-col items-center justify-center text-center mx-[-1.5rem] sm:mx-[-2rem] mt-[-2rem] px-4 pb-20 pt-24 min-h-[580px] isolate w-[calc(100%+3rem)] sm:w-[calc(100%+4rem)] bg-grid-sheet border-b-4 border-foreground overflow-hidden">
                 
                 {/* DIY visual sheet accents */}
-                <div className="relative sm:absolute w-[290px] sm:w-[280px] mb-6 sm:mb-0 sm:top-10 sm:left-6 -rotate-[3deg] sm:-rotate-12 bg-wrappedpurple text-wrappedwhite font-mono text-[10px] sm:text-xs uppercase font-extrabold p-3 border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] select-none z-20 flex items-center gap-3">
+                <div className="relative sm:absolute w-[290px] sm:w-[280px] mb-6 sm:mb-0 sm:top-10 sm:left-6 -rotate-[3deg] sm:-rotate-12 bg-purple text-white font-mono text-[10px] sm:text-xs uppercase font-extrabold p-3 border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] select-none z-20 flex items-center gap-3">
                     <div className="shrink-0 bg-white p-1 border border-foreground shadow-[1px_1px_0px_0px_#000] rounded-none rotate-[3deg]">
                         <Image 
                             src="/cs-club-logo.png" 
@@ -96,7 +96,7 @@ export default function WelcomePage() {
                         <a 
                             href="https://csclub.org.au/" 
                             target="_blank" 
-                            className="text-wrappedyellow font-extrabold underline hover:text-white transition-colors"
+                            className="text-yellow font-extrabold underline hover:text-white transition-colors"
                         >
                             Adelaide University Computer Science Club
                         </a>
@@ -141,11 +141,11 @@ export default function WelcomePage() {
 
                         {bubbles.map((b, idx) => {
                             const paletteColors = [
-                                { bgClass: "bg-wrappedyellow text-wrappedblack", hex: "#e6c229" },
-                                { bgClass: "bg-wrappedorange text-wrappedwhite", hex: "#f17105" },
-                                { bgClass: "bg-wrappedred text-wrappedwhite", hex: "#d11149" },
-                                { bgClass: "bg-wrappedpurple text-wrappedwhite", hex: "#6610f2" },
-                                { bgClass: "bg-wrappedblue text-wrappedwhite", hex: "#1a8fe3" },
+                                { bgClass: "bg-yellow text-black", hex: "#e6c229" },
+                                { bgClass: "bg-orange text-white", hex: "#f17105" },
+                                { bgClass: "bg-red text-white", hex: "#d11149" },
+                                { bgClass: "bg-purple text-white", hex: "#6610f2" },
+                                { bgClass: "bg-blue text-white", hex: "#1a8fe3" },
                             ];
                             const colorOption = paletteColors[idx % paletteColors.length];
                             // To make mobile screens less congested, hide 2/3 of the bubbles on smaller screens
@@ -198,7 +198,7 @@ export default function WelcomePage() {
                         href="/courses"
                         color="secondary"
                         size="lg"
-                        className="font-mixtape uppercase tracking-wider font-extrabold text-wrappedblack bg-wrappedyellow px-6 py-5 sm:px-10 sm:py-7 text-sm sm:text-lg rounded-none border-3 sm:border-4 border-foreground shadow-[4px_4px_0px_0px_#000] sm:shadow-[5px_5px_0px_0px_#000] dark:shadow-[4px_4px_0px_0px_#fff] dark:sm:shadow-[5px_5px_0px_0px_#fff] hover:scale-105 active:scale-95 transition-all duration-200 transform hover:!opacity-100 data-[hover=true]:!opacity-100"
+                        className="font-mixtape uppercase tracking-wider font-extrabold text-black bg-yellow px-6 py-5 sm:px-10 sm:py-7 text-sm sm:text-lg rounded-none border-3 sm:border-4 border-foreground shadow-[4px_4px_0px_0px_#000] sm:shadow-[5px_5px_0px_0px_#000] dark:shadow-[4px_4px_0px_0px_#fff] dark:sm:shadow-[5px_5px_0px_0px_#fff] hover:scale-105 active:scale-95 transition-all duration-200 transform hover:!opacity-100 data-[hover=true]:!opacity-100 animate-pulse-custom"
                         endContent={<FaArrowRight className="text-sm sm:text-xl" />}
                     >
                         Browse Course Reviews
@@ -212,7 +212,7 @@ export default function WelcomePage() {
                 
                 <Card className="bg-background border-4 border-foreground rounded-none shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#000] dark:hover:shadow-[8px_8px_0px_0px_#fff] transition-all duration-200">
                     <CardBody className="p-6 flex flex-col gap-4">
-                        <div className="p-3 bg-neongreen text-mixtapeblack w-fit rounded-none border-2 border-foreground shadow-[2px_2px_0px_0px_#000] rotate-[-3deg]">
+                        <div className="p-3 bg-yellow text-black w-fit rounded-none border-2 border-foreground shadow-[2px_2px_0px_0px_#000] rotate-[-3deg]">
                             <FaSearch className="text-xl" />
                         </div>
                         <h2 className="text-xl font-mixtape uppercase font-extrabold tracking-tight">Smart Search</h2>
@@ -224,8 +224,13 @@ export default function WelcomePage() {
 
                 <Card className="bg-background border-4 border-foreground rounded-none shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#000] dark:hover:shadow-[8px_8px_0px_0px_#fff] transition-all duration-200">
                     <CardBody className="p-6 flex flex-col gap-4">
-                        <div className="p-3 bg-hotpink text-white w-fit rounded-none border-2 border-foreground shadow-[2px_2px_0px_0px_#000] rotate-[3deg]">
-                            <FaStar className="text-xl" />
+                        <div className="p-3 bg-red text-white w-fit rounded-none border-2 border-foreground shadow-[2px_2px_0px_0px_#000] rotate-[3deg]">
+                            <MdStar
+                                className="w-5 h-5 text-yellow"
+                                fill="#FAA307"
+                                stroke="black"
+                                strokeWidth={1.2}
+                            />
                         </div>
                         <h2 className="text-xl font-mixtape uppercase font-extrabold tracking-tight">Sub-score Ratings</h2>
                         <p className="text-xs font-mono text-foreground/80 leading-relaxed">
@@ -236,7 +241,7 @@ export default function WelcomePage() {
 
                 <Card className="bg-background border-4 border-foreground rounded-none shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#000] dark:hover:shadow-[8px_8px_0px_0px_#fff] transition-all duration-200">
                     <CardBody className="p-6 flex flex-col gap-4">
-                        <div className="p-3 bg-wrappedblue text-white w-fit rounded-none border-2 border-foreground shadow-[2px_2px_0px_0px_#000] rotate-[-2deg]">
+                        <div className="p-3 bg-blue text-white w-fit rounded-none border-2 border-foreground shadow-[2px_2px_0px_0px_#000] rotate-[-2deg]">
                             <FaComments className="text-xl" />
                         </div>
                         <h2 className="text-xl font-mixtape uppercase font-extrabold tracking-tight">Threaded Debates</h2>
@@ -250,8 +255,8 @@ export default function WelcomePage() {
             {/* Guide */}
             <section className="bg-background border-4 border-foreground rounded-none p-8 md:p-12 shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff] bg-grid-sheet">
                 <div className="text-center mb-12">
-                    <h2 className="font-mixtape font-black uppercase text-2xl sm:text-4xl bg-hotpink text-white w-fit mx-auto px-4 py-1.5 border-3 border-foreground shadow-[3px_3px_0px_0px_#000] rotate-[1.5deg]">How it Works</h2>
-                    <p className="font-scribble text-base text-foreground/75 mt-4 rotate-[-1deg] font-bold">
+                    <h2 className="font-mixtape font-black uppercase text-2xl sm:text-4xl bg-red text-white w-fit mx-auto px-4 py-1.5 border-3 border-foreground shadow-[3px_3px_0px_0px_#000] rotate-[1.5deg]">How it Works</h2>
+                    <p className="font-mono text-base text-foreground/75 mt-4 rotate-[-1deg] font-bold">
                         Get from choosing courses to submitting ratings in 4 simple steps
                     </p>
                 </div>
@@ -260,7 +265,7 @@ export default function WelcomePage() {
                     
                     {/* Step 1 */}
                     <div className="flex flex-col items-center text-center gap-3 bg-background border-3 border-foreground p-5 rounded-none rotate-[-1.5deg] shadow-[4px_4px_0px_0px_#000] dark:shadow-[4px_4px_0px_0px_#fff] hover:rotate-0 transition-transform">
-                        <div className="w-10 h-10 bg-wrappedyellow border-2 border-foreground rounded-none flex items-center justify-center font-mono font-black text-wrappedblack shadow-[2px_2px_0px_0px_#000] text-lg select-none">
+                        <div className="w-10 h-10 bg-yellow border-2 border-foreground rounded-none flex items-center justify-center font-mono font-black text-black shadow-[2px_2px_0px_0px_#000] text-lg select-none">
                             1
                         </div>
                         <h3 className="font-mixtape font-extrabold uppercase text-base tracking-tight">Browse</h3>
@@ -271,7 +276,7 @@ export default function WelcomePage() {
 
                     {/* Step 2 */}
                     <div className="flex flex-col items-center text-center gap-3 bg-background border-3 border-foreground p-5 rounded-none rotate-[1deg] shadow-[4px_4px_0px_0px_#000] dark:shadow-[4px_4px_0px_0px_#fff] hover:rotate-0 transition-transform">
-                        <div className="w-10 h-10 bg-wrappedorange border-2 border-foreground rounded-none flex items-center justify-center font-mono font-black text-wrappedwhite shadow-[2px_2px_0px_0px_#000] text-lg select-none">
+                        <div className="w-10 h-10 bg-orange border-2 border-foreground rounded-none flex items-center justify-center font-mono font-black text-white shadow-[2px_2px_0px_0px_#000] text-lg select-none">
                             2
                         </div>
                         <h3 className="font-mixtape font-extrabold uppercase text-base tracking-tight">Login</h3>
@@ -282,7 +287,7 @@ export default function WelcomePage() {
 
                     {/* Stepper Card 3 */}
                     <div className="flex flex-col items-center text-center gap-3 bg-background border-3 border-foreground p-5 rounded-none rotate-[-2deg] shadow-[4px_4px_0px_0px_#000] dark:shadow-[4px_4px_0px_0px_#fff] hover:rotate-0 transition-transform">
-                        <div className="w-10 h-10 bg-wrappedred border-2 border-foreground rounded-none flex items-center justify-center font-mono font-black text-wrappedwhite shadow-[2px_2px_0px_0px_#000] text-lg select-none">
+                        <div className="w-10 h-10 bg-red border-2 border-foreground rounded-none flex items-center justify-center font-mono font-black text-white shadow-[2px_2px_0px_0px_#000] text-lg select-none">
                             3
                         </div>
                         <h3 className="font-mixtape font-extrabold uppercase text-base tracking-tight">Review</h3>
@@ -293,7 +298,7 @@ export default function WelcomePage() {
 
                     {/* Step 4 */}
                     <div className="flex flex-col items-center text-center gap-3 bg-background border-3 border-foreground p-5 rounded-none rotate-[2deg] shadow-[4px_4px_0px_0px_#000] dark:shadow-[4px_4px_0px_0px_#fff] hover:rotate-0 transition-transform">
-                        <div className="w-10 h-10 bg-wrappedblue border-2 border-foreground rounded-none flex items-center justify-center font-mono font-black text-wrappedwhite shadow-[2px_2px_0px_0px_#000] text-lg select-none">
+                        <div className="w-10 h-10 bg-blue border-2 border-foreground rounded-none flex items-center justify-center font-mono font-black text-white shadow-[2px_2px_0px_0px_#000] text-lg select-none">
                             4
                         </div>
                         <h3 className="font-mixtape font-extrabold uppercase text-base tracking-tight">Discuss</h3>
