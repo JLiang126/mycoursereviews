@@ -72,6 +72,19 @@ body {
   animation: customPulse 2.4s infinite ease-in-out;
 }
 
+@keyframes warningScale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+.animate-warning-scale {
+  animation: warningScale 1.5s infinite ease-in-out;
+}
+
 /* Bulletproof Global Placeholder Color Overrides */
 ::placeholder,
 input::placeholder,

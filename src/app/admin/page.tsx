@@ -1,5 +1,5 @@
 import { eq, sql } from 'drizzle-orm';
-import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 import { auth } from '@/auth';
 import { db } from '@/db';
@@ -11,24 +11,9 @@ export const dynamic = 'force-dynamic';
 export default async function AdminPage() {
     const session = await auth();
 
-    // 1. Secure Access Check - Redirect or block standard user sessions
+    // 1. Secure Access Check - Return 404 for standard user sessions
     if (session?.user?.role !== 'admin') {
-        return (
-            <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-                <div className="text-6xl animate-bounce">🚫</div>
-                <h1 className="text-3xl font-extrabold tracking-tight text-red-500">Access Denied</h1>
-                <p className="text-sm text-foreground/60 max-w-md">
-                    Access to this moderation page is strictly restricted to authenticated members of the 
-                    Adelaide University Computer Science Club committee.
-                </p>
-                <Link
-                    href="/"
-                    className="mt-4 px-4 py-2 bg-primary text-[#FAF9F5] font-bold rounded-xl shadow-lg hover:scale-105 transition-transform"
-                >
-                    Return Home
-                </Link>
-            </div>
-        );
+        notFound();
     }
 
     // 2. Fetch Aggregated Platform Stats
@@ -76,9 +61,35 @@ export default async function AdminPage() {
         console.error('Error fetching admin reviews feed:', error);
     }
 
+    // Fetch all comments, joining with users and reviews tables
+    let allComments: any[] = [];
+    try {
+        allComments = await db
+            .select({
+                id: comments.id,
+                reviewId: comments.reviewId,
+                content: comments.content,
+                createdAt: comments.createdAt,
+                authorName: users.name,
+                courseCode: reviews.courseCode,
+            })
+            .from(comments)
+            .leftJoin(users, eq(comments.userId, users.id))
+            .leftJoin(reviews, eq(comments.reviewId, reviews.id))
+            .orderBy(sql`${comments.createdAt} desc`);
+    } catch (error) {
+        console.error('Error fetching admin comments feed:', error);
+    }
+
     const formattedReviews = allReviews.map((r) => ({
         ...r,
         reviewerName: r.reviewerName || 'Unknown Identity',
+    }));
+
+    const formattedComments = allComments.map((c) => ({
+        ...c,
+        authorName: c.authorName || 'Unknown Identity',
+        courseCode: c.courseCode || 'Unknown Course',
     }));
 
     const stats = {
@@ -88,5 +99,5 @@ export default async function AdminPage() {
         totalCourses,
     };
 
-    return <AdminDashboardClient reviews={formattedReviews} stats={stats} />;
+    return <AdminDashboardClient reviews={formattedReviews} comments={formattedComments} stats={stats} />;
 }

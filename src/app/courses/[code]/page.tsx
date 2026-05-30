@@ -24,21 +24,13 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
     // 1. Fetch course description outline from Redis-backed Courses API client
     let courseData = await CoursesApiClient.getCourseByCode(decodedCode);
-    const isNoLongerOffered = !courseData;
-    if (!courseData) {
-        // Course is no longer in the API, build a no-longer-offered fallback
-        const normalized = decodedCode.toUpperCase().trim();
-        courseData = {
-            code: normalized,
-            name: normalized,
-            description: 'This course is no longer offered by Adelaide University. Historical reviews have been preserved below for reference.',
-            terms: ['No Longer Offered'],
-            officialLink: '#',
-            isNoLongerOffered: true,
-        };
-    }
 
-    // 2. Fetch all local reviews from PostgreSQL database
+    // 2. Determine target course code for reviews and voting lookup
+    // If the API outline exists, we use its normalized code (e.g. "COMP SCI 1102").
+    // Otherwise, we fallback to the uppercase trimmed URL parameter.
+    const targetCode = courseData ? courseData.code : decodedCode.toUpperCase().trim();
+
+    // 3. Fetch all local reviews from PostgreSQL database
     let reviewsList: any[] = [];
     try {
         reviewsList = await db
@@ -59,9 +51,26 @@ export default async function CourseDetailPage({ params }: PageProps) {
             })
             .from(reviews)
             .leftJoin(users, eq(reviews.userId, users.id))
-            .where(eq(reviews.courseCode, decodedCode));
+            .where(eq(reviews.courseCode, targetCode));
     } catch (error) {
         console.error('Error fetching course reviews:', error);
+    }
+
+    if (!courseData) {
+        // If the course does not exist in the official API and has 0 student reviews, it has never existed!
+        if (reviewsList.length === 0) {
+            notFound();
+        }
+
+        // Course is no longer in the API, but has historical reviews, build a no-longer-offered fallback
+        courseData = {
+            code: targetCode,
+            name: targetCode,
+            description: 'This course is no longer offered by Adelaide University. Historical reviews have been preserved below for reference.',
+            terms: ['No Longer Offered'],
+            officialLink: '#',
+            isNoLongerOffered: true,
+        };
     }
 
     // 3. Fetch Likes and Comments for each review in our dataset
@@ -157,7 +166,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
         }
     }
 
-    const updateVoteData = await getCourseUpdateVoteData(decodedCode, session?.user?.id ?? undefined, defaultLastUpdate);
+    const updateVoteData = await getCourseUpdateVoteData(targetCode, session?.user?.id ?? undefined, defaultLastUpdate);
 
     return (
         <CourseDetailClient
