@@ -14,18 +14,13 @@ import {
     Slider,
     Textarea,
 } from '@heroui/react';
-import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { clsx } from 'clsx';
 import { MdStar } from 'react-icons/md';
+import { TERMS_OPTIONS, GRADE_OPTIONS } from '@/config/site';
 import { z } from 'zod';
 
-import { submitReview } from '@/app/actions/reviews';
-import { TermsAndConditionsModal } from './TermsAndConditionsModal';
-import { TERMS_OPTIONS, GRADE_OPTIONS } from '@/config/site';
-
-// Schema matching Server Action validation
-const ReviewFormSchema = z.object({
+const ReviewEditSchema = z.object({
     title: z.string().min(3, 'Title must be at least 3 characters').max(100),
     description: z.string().min(10, 'Description must be at least 10 characters').max(2000),
     overallRating: z.number().int().min(1).max(5),
@@ -35,21 +30,31 @@ const ReviewFormSchema = z.object({
     termTaken: z.string().min(1, 'Term Taken is required'),
     grade: z.string().optional(),
     isAnonymous: z.boolean().default(false),
-    agreeToTerms: z.literal(true, {
-        message: 'You must agree to the Terms & Conditions',
-    }),
 });
 
-interface ReviewModalProps {
-    isOpen: boolean;
-    onOpenChange: (open: boolean) => void;
-    courseCode: string;
-    courseName: string;
+export interface ReviewToEdit {
+    id: string;
+    courseCode?: string;
+    title: string;
+    description: string;
+    overallRating: number;
+    difficultyScore: number;
+    usefulnessScore: number;
+    enjoymentScore: number;
+    termTaken: string;
+    grade: string | null;
+    isAnonymous: boolean;
 }
 
-export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: ReviewModalProps) => {
-    const router = useRouter();
-    const [isPending, startTransition] = useTransition();
+interface EditReviewModalProps {
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    review: ReviewToEdit | null;
+    onSave: (data: z.infer<typeof ReviewEditSchema>) => Promise<void>;
+}
+
+export const EditReviewModal = ({ isOpen, onOpenChange, review, onSave }: EditReviewModalProps) => {
+    const [isSaving, startSaveTransition] = useTransition();
 
     // Form States
     const [title, setTitle] = useState('');
@@ -61,14 +66,26 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
     const [termTaken, setTermTaken] = useState('');
     const [grade, setGrade] = useState('');
     const [isAnonymous, setIsAnonymous] = useState(false);
-    const [agreeToTerms, setAgreeToTerms] = useState(false);
-    const [isTermsOpen, setIsTermsOpen] = useState(false);
 
-    // Validation Errors State
+    // Validation Errors
     const [errors, setErrors] = useState<Record<string, string>>({});
-
-    // Star rating hover/click help state
     const [hoveredStar, setHoveredStar] = useState<number | null>(null);
+
+    // Sync form state when review changes
+    useEffect(() => {
+        if (review) {
+            setTitle(review.title);
+            setDescription(review.description);
+            setOverallRating(review.overallRating);
+            setDifficultyScore(review.difficultyScore);
+            setUsefulnessScore(review.usefulnessScore);
+            setEnjoymentScore(review.enjoymentScore);
+            setTermTaken(review.termTaken);
+            setGrade(review.grade || '');
+            setIsAnonymous(review.isAnonymous);
+            setErrors({});
+        }
+    }, [review, isOpen]);
 
     const handleSubmit = (onClose: () => void) => {
         setErrors({});
@@ -83,10 +100,9 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
             termTaken,
             grade: grade || undefined,
             isAnonymous,
-            agreeToTerms,
         };
 
-        const result = ReviewFormSchema.safeParse(formData);
+        const result = ReviewEditSchema.safeParse(formData);
 
         if (!result.success) {
             const newErrors: Record<string, string> = {};
@@ -98,28 +114,12 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
             return;
         }
 
-        startTransition(async () => {
+        startSaveTransition(async () => {
             try {
-                await submitReview({
-                    ...result.data,
-                    courseCode,
-                });
-                
-                // Clear state on success
-                setTitle('');
-                setDescription('');
-                setOverallRating(5);
-                setDifficultyScore(3);
-                setUsefulnessScore(3);
-                setEnjoymentScore(3);
-                setTermTaken('');
-                setGrade('');
-                setIsAnonymous(false);
-                setAgreeToTerms(false);
-                
+                await onSave(result.data);
                 onClose();
             } catch (err: any) {
-                setErrors({ submit: err.message || 'Failed to submit review' });
+                setErrors({ submit: err.message || 'Failed to update review' });
             }
         });
     };
@@ -127,27 +127,36 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
 
 
     return (
-        <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl" scrollBehavior="inside" className="bg-background border-4 border-foreground text-foreground rounded-none shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
+        <Modal
+            isOpen={isOpen}
+            onOpenChange={onOpenChange}
+            size="2xl"
+            scrollBehavior="inside"
+            className="bg-background border-4 border-foreground text-foreground rounded-none shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] font-mono"
+        >
             <ModalContent className="rounded-none">
                 {(onClose) => (
                     <>
                         <ModalHeader className="flex flex-col gap-1 border-b-3 border-foreground px-6 py-4">
-                            <span className="font-mixtape text-xs uppercase font-extrabold text-black bg-yellow border-2 border-foreground px-2 py-0.5 w-fit shadow-[2px_2px_0px_0px_#000] rotate-[-2deg] inline-block mb-1">{courseCode}</span>
-                            <h2 className="font-mixtape uppercase text-xl font-extrabold tracking-tight">Review this Course</h2>
+                            {review?.courseCode && (
+                                <span className="font-mixtape text-xs uppercase font-extrabold text-black bg-yellow border-2 border-foreground px-2 py-0.5 w-fit shadow-[2px_2px_0px_0px_#000] rotate-[-2deg] inline-block mb-1">
+                                    {review.courseCode}
+                                </span>
+                            )}
+                            <h2 className="font-mixtape uppercase text-xl font-extrabold tracking-tight">Edit Your Review</h2>
                             <p className="font-mono text-xs text-foreground/80 font-bold rotate-[0.5deg]">
-                                Help other Adelaide University students make informed choices by sharing your feedback.
+                                Modify your rating, score weights, or text comments.
                             </p>
                         </ModalHeader>
 
                         <ModalBody className="gap-6 py-4">
-                            
                             {errors.submit && (
-                                <div className="text-xs text-red-500 bg-red-500/10 border-2 border-red-500/20 p-3 rounded-none font-mono font-black">
+                                <div className="text-xs text-red bg-red/10 border-2 border-red p-3 rounded-none font-mono font-black">
                                     {errors.submit}
                                 </div>
                             )}
 
-                            {/* Overall 5-star Selector */}
+                            {/* Star Selector */}
                             <div className="flex flex-col gap-2 font-mono">
                                 <label className="text-xs font-black uppercase text-foreground">Overall Star Rating</label>
                                 <div className="flex items-center gap-1.5 text-2xl">
@@ -170,12 +179,12 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                         ({overallRating} of 5)
                                     </span>
                                 </div>
-                                {errors.overallRating && <p className="text-3xs text-red-500 font-bold">{errors.overallRating}</p>}
+                                {errors.overallRating && <p className="text-3xs text-red font-bold">{errors.overallRating}</p>}
                             </div>
 
-                            {/* Range Rating Sliders Grid */}
+                            {/* EQ Sliders Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-foreground/[0.03] p-4 border-2 border-dashed border-foreground/30">
-                                {/* Difficulty Slider */}
+                                {/* Difficulty */}
                                 <div className="flex flex-col gap-1 font-mono">
                                     <Slider
                                         label="Difficulty"
@@ -201,7 +210,7 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                     </span>
                                 </div>
 
-                                {/* Usefulness Slider */}
+                                {/* Usefulness */}
                                 <div className="flex flex-col gap-1 font-mono">
                                     <Slider
                                         label="Usefulness"
@@ -227,7 +236,7 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                     </span>
                                 </div>
 
-                                {/* Enjoyment Slider */}
+                                {/* Enjoyment */}
                                 <div className="flex flex-col gap-1 font-mono">
                                     <Slider
                                         label="Enjoyment"
@@ -254,7 +263,7 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                 </div>
                             </div>
 
-                            {/* Dropdown selectors: Terms and Grades */}
+                            {/* Terms & Grades selectors */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <Select
@@ -291,12 +300,14 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
 
                                 <div>
                                     <Select
-                                        label="Grade Achieved (Optional)"
+                                        label="Grade Received (Optional)"
                                         radius="none"
                                         placeholder="Select Grade"
                                         selectedKeys={grade ? [grade] : []}
                                         onSelectionChange={(keys) => setGrade(Array.from(keys)[0] as string)}
-                                        aria-label="Select grade achieved"
+                                        errorMessage={errors.grade}
+                                        isInvalid={!!errors.grade}
+                                        aria-label="Select grade received"
                                         className="font-mono"
                                         classNames={{
                                             trigger: "border-2 border-foreground bg-background rounded-none shadow-none text-foreground",
@@ -321,45 +332,43 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                 </div>
                             </div>
 
-                            {/* Title text input */}
-                            <div>
+                            {/* Review Title Input */}
+                            <div className="flex flex-col gap-2 font-mono">
+                                <label className="text-xs font-black uppercase text-foreground">Review Headline</label>
                                 <Input
-                                    label="Review Title"
+                                    placeholder="e.g. Great lectures, tough exam!"
                                     radius="none"
-                                    placeholder="Summarize your experience (e.g., 'Fantastic course with high practical values')"
                                     value={title}
                                     onValueChange={setTitle}
-                                    isInvalid={!!errors.title}
                                     errorMessage={errors.title}
-                                    className="font-mono"
+                                    isInvalid={!!errors.title}
                                     classNames={{
                                         inputWrapper: "border-2 border-foreground bg-background rounded-none shadow-none group-data-[focus=true]:border-foreground",
-                                        input: "placeholder:text-grey dark:placeholder:text-grey text-foreground",
+                                        input: "placeholder:text-grey text-foreground",
                                     }}
                                 />
                             </div>
 
-                            {/* Description text area */}
-                            <div>
+                            {/* Review Description Textarea */}
+                            <div className="flex flex-col gap-2 font-mono">
+                                <label className="text-xs font-black uppercase text-foreground">Detailed Review Comments</label>
                                 <Textarea
-                                    label="Review Description"
+                                    placeholder="Write your review here... Be as specific as possible to help future students!"
                                     radius="none"
-                                    placeholder="Detail the course contents, lecturer styles, assignments difficulty, and study tips..."
+                                    minRows={4}
                                     value={description}
                                     onValueChange={setDescription}
-                                    isInvalid={!!errors.description}
                                     errorMessage={errors.description}
-                                    minRows={4}
-                                    className="font-mono"
+                                    isInvalid={!!errors.description}
                                     classNames={{
                                         inputWrapper: "border-2 border-foreground bg-background rounded-none shadow-none group-data-[focus=true]:border-foreground",
-                                        input: "placeholder:text-grey dark:placeholder:text-grey text-foreground",
+                                        input: "placeholder:text-grey text-foreground",
                                     }}
                                 />
                             </div>
 
-                            {/* Anonymity and Agreement Options Checkboxes */}
-                            <div className="flex flex-col gap-3 mt-2 bg-foreground/[0.03] p-4 border-2 border-dashed border-foreground/30 text-xs font-mono">
+                            {/* Anonymous Checkbox */}
+                            <div className="flex items-center gap-2 font-mono bg-foreground/[0.03] p-4 border-2 border-dashed border-foreground/30 text-xs">
                                 <Checkbox
                                     isSelected={isAnonymous}
                                     onValueChange={setIsAnonymous}
@@ -367,70 +376,36 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                     radius="none"
                                     className="rounded-none"
                                 >
-                                    <div className="flex flex-col gap-0.5 ml-1">
-                                        <span className="font-black uppercase text-2xs">Post Anonymously</span>
+                                    <div className="flex flex-col gap-0.5 ml-1 font-mono">
+                                        <span className="font-black uppercase text-2xs">Post anonymously (Hide my real name)</span>
                                         <span className="text-[9px] text-foreground/60 leading-none">
                                             Your name will be hidden from public view, but retained in the admin logs for safety checks.
                                         </span>
                                     </div>
                                 </Checkbox>
-
-                                <Checkbox
-                                    isSelected={agreeToTerms}
-                                    onValueChange={setAgreeToTerms}
-                                    isInvalid={!!errors.agreeToTerms}
-                                    size="sm"
-                                    radius="none"
-                                    className="rounded-none font-bold text-2xs uppercase"
-                                >
-                                    <div className="flex items-center gap-1 ml-1 text-foreground/75 font-mono text-2xs uppercase font-extrabold">
-                                        I agree to the{' '}
-                                        <span 
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                setIsTermsOpen(true);
-                                            }} 
-                                            className="text-red font-extrabold hover:underline cursor-pointer select-none"
-                                        >
-                                            Terms & Conditions
-                                        </span>
-                                    </div>
-                                </Checkbox>
-                                {errors.agreeToTerms && (
-                                    <p className="text-3xs text-red-500 font-bold ml-6">{errors.agreeToTerms}</p>
-                                )}
                             </div>
-
                         </ModalBody>
 
-                        <ModalFooter className="border-t-3 border-foreground px-6 py-4">
-                            <Button radius="none" variant="flat" color="default" onPress={onClose} isDisabled={isPending} className="font-mono text-xs border border-foreground">
+                        <ModalFooter className="flex justify-end gap-3 pt-4 px-6 pb-4 border-t-2 border-dashed border-foreground/30">
+                            <Button
+                                variant="flat"
+                                onPress={onClose}
+                                isDisabled={isSaving}
+                                className="font-mono text-xs uppercase font-black bg-grey dark:bg-grey/25 text-foreground hover:bg-grey/80 border-2 border-foreground rounded-none h-10 px-6 cursor-pointer"
+                            >
                                 Cancel
                             </Button>
                             <Button
-                                radius="none"
-                                isLoading={isPending}
-                                isDisabled={!agreeToTerms}
+                                isLoading={isSaving}
                                 onPress={() => handleSubmit(onClose)}
-                                className={clsx(
-                                    "font-mono text-xs uppercase font-black border-2 border-foreground transition-all",
-                                    agreeToTerms 
-                                        ? "bg-yellow text-black shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#000] dark:hover:shadow-[4px_4px_0px_0px_#fff] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_#000] dark:active:shadow-[2px_2px_0px_0px_#fff]" 
-                                        : "bg-grey/30 text-foreground/40 cursor-not-allowed opacity-50 shadow-none border-dashed"
-                                )}
+                                className="font-mono text-xs uppercase font-black bg-yellow text-black border-2 border-foreground rounded-none shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#000] dark:hover:shadow-[4px_4px_0px_0px_#fff] active:translate-x-[1px] active:translate-y-[1px] transition-all h-10 px-6"
                             >
-                                Submit Review
+                                Save Changes
                             </Button>
                         </ModalFooter>
                     </>
                 )}
             </ModalContent>
-            {/* Terms sub-modal inside ReviewModal */}
-            <TermsAndConditionsModal
-                isOpen={isTermsOpen}
-                onClose={() => setIsTermsOpen(false)}
-            />
         </Modal>
     );
 };

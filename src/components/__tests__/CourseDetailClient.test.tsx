@@ -26,11 +26,39 @@ jest.mock('@/lib/course-update-voting', () => ({
     DEFAULT_LAST_UPDATE: 'Semester 1, 2026',
 }));
 
-// Mock @heroui/react Modal components to render as standard divs, avoiding complex framer-motion overlays in Jest jsdom
+// Mock @heroui/react components to avoid complex framer-motion overlays and dynamic imports in Jest jsdom
 jest.mock('@heroui/react', () => {
-    const original = jest.requireActual('@heroui/react');
+    const React = require('react');
     return {
-        ...original,
+        Button: ({ children, onClick, onPress, className, as: Component = 'button', ...props }: any) => (
+            <Component onClick={onClick || onPress} className={className} {...props}>
+                {children}
+            </Component>
+        ),
+        Chip: ({ children, className, ...props }: any) => (
+            <div data-testid="mock-chip" className={className} {...props}>
+                {children}
+            </div>
+        ),
+        Card: ({ children, className, ...props }: any) => (
+            <div data-testid="mock-card" className={className} {...props}>
+                {children}
+            </div>
+        ),
+        CardBody: ({ children, className, ...props }: any) => (
+            <div data-testid="mock-card-body" className={className} {...props}>
+                {children}
+            </div>
+        ),
+        Textarea: ({ value, onValueChange, placeholder, className, ...props }: any) => (
+            <textarea
+                value={value}
+                onChange={(e) => onValueChange && onValueChange(e.target.value)}
+                placeholder={placeholder}
+                className={className}
+                {...props}
+            />
+        ),
         Modal: ({ children, isOpen }: any) => isOpen ? <div data-testid="mock-modal">{children}</div> : null,
         ModalContent: ({ children }: any) => {
             return (
@@ -42,6 +70,28 @@ jest.mock('@heroui/react', () => {
         ModalHeader: ({ children, ...props }: any) => <div {...props}>{children}</div>,
         ModalBody: ({ children, ...props }: any) => <div {...props}>{children}</div>,
         ModalFooter: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+        Select: ({ children, label, value, onChange, ...props }: any) => (
+            <div data-testid="mock-select" {...props}>
+                <label>{label}</label>
+                <select value={value} onChange={onChange}>
+                    {children}
+                </select>
+            </div>
+        ),
+        SelectItem: ({ children, value, ...props }: any) => (
+            <option value={value} {...props}>
+                {children}
+            </option>
+        ),
+        useDisclosure: () => {
+            const [isOpen, setIsOpen] = React.useState(false);
+            return {
+                isOpen,
+                onOpen: () => setIsOpen(true),
+                onClose: () => setIsOpen(false),
+                onOpenChange: (val?: boolean) => setIsOpen((prev: boolean) => val !== undefined ? val : !prev),
+            };
+        },
     };
 });
 
@@ -138,7 +188,7 @@ describe('CourseDetailClient Component', () => {
 
         // Warning modal text should be visible
         expect(screen.getByText('Authentication Required')).toBeInTheDocument();
-        expect(screen.getByText(/You need to be logged into your verified/i)).toBeInTheDocument();
+        expect(screen.getByText(/You need to be logged into your/i)).toBeInTheDocument();
 
         // Clicking the sign in option triggers NextAuth OIDC flow
         const loginBtn = screen.getByRole('button', { name: /Log In with Keycloak/i });

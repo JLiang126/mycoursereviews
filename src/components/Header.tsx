@@ -26,6 +26,7 @@ import { useEffect, useState } from 'react';
 import { FaMoon, FaSignInAlt, FaSignOutAlt, FaSun, FaQuestion, FaCommentAlt, FaBookOpen, FaClipboardList } from 'react-icons/fa';
 
 import { siteConfig } from '@/config/site';
+import { HowToUseModal } from './HowToUseModal';
 
 export const Header = () => {
     const { theme, setTheme } = useTheme();
@@ -33,7 +34,6 @@ export const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [isGuideOpen, setIsGuideOpen] = useState(false);
-    const [guideStep, setGuideStep] = useState(0);
     const router = useRouter();
     const pathname = usePathname();
 
@@ -154,7 +154,6 @@ export const Header = () => {
                             color="default"
                             aria-label="How to Use Guide"
                             onPress={() => {
-                                setGuideStep(0);
                                 setIsGuideOpen(true);
                             }}
                             className="bg-background border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] text-sm rounded-none transition-all duration-200 h-9 w-9 min-w-9 p-0 flex items-center justify-center cursor-pointer text-foreground shrink-0"
@@ -267,7 +266,6 @@ export const Header = () => {
                         <button
                             onClick={() => {
                                 setIsMenuOpen(false);
-                                setGuideStep(0);
                                 setIsGuideOpen(true);
                             }}
                             className="w-full font-mono tracking-wide text-xs uppercase font-black px-4 py-3 border-2 border-foreground bg-background text-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:bg-yellow hover:text-black hover:shadow-[4px_4px_0px_0px_#000] dark:hover:shadow-[4px_4px_0px_0px_#fff] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200 rounded-none flex items-center justify-center gap-2 cursor-pointer"
@@ -389,142 +387,10 @@ export const Header = () => {
             </NavbarMenu>
 
             {/* "How to Use" Carousel Modal */}
-            <Modal 
-                isOpen={isGuideOpen} 
+            <HowToUseModal
+                isOpen={isGuideOpen}
                 onClose={closeGuide}
-                size="md"
-                hideCloseButton
-                className="bg-background border-4 border-foreground text-foreground rounded-none shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] z-[100]"
-            >
-                <ModalContent className="rounded-none">
-                    {(onClose) => (
-                        <>
-                            <ModalHeader className="font-mixtape uppercase tracking-tighter border-b-3 border-foreground px-4 sm:px-6 py-3 flex justify-between items-center bg-purple text-white rounded-none gap-4">
-                                <div className="flex flex-col gap-0.5 select-none">
-                                    <span className="text-sm sm:text-base font-extrabold leading-none">HOW TO USE GUIDE</span>
-                                    <span className="text-3xs font-mono font-normal tracking-wide opacity-80">STEP {guideStep + 1} OF 3</span>
-                                </div>
-                                <button
-                                    onClick={closeGuide}
-                                    className="cursor-pointer h-7 w-7 border-2 border-foreground bg-background text-foreground hover:bg-secondary hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] flex items-center justify-center font-mono font-black text-sm rounded-none transition-all duration-200"
-                                >
-                                    ✕
-                                </button>
-                            </ModalHeader>
-                            <ModalBody className="p-6 flex flex-col gap-4 font-mono">
-                                {/* Step illustration/image placeholder */}
-                                <div className="h-44 w-full bg-lightgrey dark:bg-grey border-2 border-foreground rounded-none flex flex-col items-center justify-center p-4 text-center select-none shadow-[inset_3px_3px_0px_0px_rgba(0,0,0,0.15)] relative overflow-hidden">
-                                    <div className="absolute top-2 left-2 text-3xs opacity-40 font-bold">PREVIEW_DECK</div>
-                                    {guideStep === 0 && (
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="bg-yellow text-black border-2 border-foreground font-black px-3 py-1 text-sm shadow-[2px_2px_0px_0px_#000] rotate-[-2deg]">
-                                                MYCOURSEREVIEWS
-                                            </div>
-                                            <p className="text-[10px] uppercase font-bold text-foreground/60 max-w-[200px] mt-1 leading-tight">
-                                                BY STUDENTS, FOR STUDENTS AT ADELAIDE UNI
-                                            </p>
-                                        </div>
-                                    )}
-                                    {guideStep === 1 && (
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="bg-red text-white border-2 border-foreground font-black px-3 py-1 text-sm shadow-[2px_2px_0px_0px_#000] rotate-[3deg]">
-                                                RATE COURSE
-                                            </div>
-                                            <p className="text-[10px] uppercase font-bold text-foreground/60 max-w-[200px] mt-1 leading-tight">
-                                                DIFFICULTY, USEFULNESS, & ENJOYMENT EQ BARS
-                                            </p>
-                                        </div>
-                                    )}
-                                    {guideStep === 2 && (
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="bg-blue text-white border-2 border-foreground font-black px-3 py-1 text-sm shadow-[2px_2px_0px_0px_#000] rotate-[-3deg]">
-                                                DISCUSS
-                                            </div>
-                                            <p className="text-[10px] uppercase font-bold text-foreground/60 max-w-[200px] mt-1 leading-tight">
-                                                LEAVE REVIEWS & THREADED DEBATES IN-PLACE
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Step text content */}
-                                <div className="text-center mt-2 min-h-[64px]">
-                                    {guideStep === 0 && (
-                                        <>
-                                            <h3 className="font-extrabold text-sm uppercase mb-1">1. Explore Outline Ratings</h3>
-                                            <p className="text-2xs text-foreground/75 leading-relaxed">
-                                                Explore course ratings on overall scoring, difficulty, usefulness, and enjoyment metrics submitted by fellow university peers.
-                                            </p>
-                                        </>
-                                    )}
-                                    {guideStep === 1 && (
-                                        <>
-                                            <h3 className="font-extrabold text-sm uppercase mb-1">2. Cast Your Rating</h3>
-                                            <p className="text-2xs text-foreground/75 leading-relaxed">
-                                                Log in securely via your CS Club account, choose a course, and rate difficulty, usefulness, and enjoyment.
-                                            </p>
-                                        </>
-                                    )}
-                                    {guideStep === 2 && (
-                                        <>
-                                            <h3 className="font-extrabold text-sm uppercase mb-1">3. Threaded Zine Discussions</h3>
-                                            <p className="text-2xs text-foreground/75 leading-relaxed">
-                                                Share anonymous insights, reply to student queries, or start in-place threaded debates on course ratings.
-                                            </p>
-                                        </>
-                                    )}
-                                </div>
-
-                                {/* Carousel navigation indicators */}
-                                <div className="flex justify-center gap-2 my-2">
-                                    {[0, 1, 2].map((stepIdx) => (
-                                        <div 
-                                            key={stepIdx} 
-                                            className={clsx(
-                                                "h-2.5 w-2.5 border border-foreground transition-all duration-200 rounded-none",
-                                                guideStep === stepIdx ? "bg-foreground scale-110 shadow-[1px_1px_0px_0px_rgba(0,0,0,0.15)]" : "bg-foreground/15"
-                                            )}
-                                        />
-                                    ))}
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex justify-between items-center gap-4 mt-2">
-                                    <Button
-                                        size="sm"
-                                        radius="none"
-                                        variant="flat"
-                                        isDisabled={guideStep === 0}
-                                        onPress={() => setGuideStep(prev => prev - 1)}
-                                        className="font-mono text-2xs uppercase border-2 border-foreground"
-                                    >
-                                        Back
-                                    </Button>
-                                    {guideStep < 2 ? (
-                                        <Button
-                                            size="sm"
-                                            radius="none"
-                                            onPress={() => setGuideStep(prev => prev + 1)}
-                                            className="font-mono text-2xs uppercase font-black bg-blue text-white border-2 border-foreground shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff]"
-                                        >
-                                            Next
-                                        </Button>
-                                    ) : (
-                                        <Button
-                                            size="sm"
-                                            radius="none"
-                                            onPress={closeGuide}
-                                            className="font-mono text-2xs uppercase font-black bg-yellow text-black border-2 border-foreground shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff]"
-                                        >
-                                            Let's Go!
-                                        </Button>
-                                    )}
-                                </div>
-                            </ModalBody>
-                        </>
-                    )}
-                </ModalContent>
-            </Modal>
+            />
         </Navbar>
     );
 };
