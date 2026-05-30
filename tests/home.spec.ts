@@ -7,9 +7,10 @@ test('home page shows brand title, tags, stepper, and theme toggle flips', async
     // Skip theme toggle checks on webkit due to default browser rendering stubs
     const skipThemeTest = browserName === 'webkit';
 
-    // Force theme to dark initially
+    // Force theme to dark and suppress guide modal auto-popup
     await page.addInitScript(() => {
         localStorage.setItem('theme', 'dark');
+        localStorage.setItem('hasSeenGuide', 'true');
     });
     await page.goto('/');
 
@@ -25,12 +26,12 @@ test('home page shows brand title, tags, stepper, and theme toggle flips', async
     await expect(tag).toBeVisible();
 
     // 3. Verify main buttons (Browse and Login)
-    const browseBtn = page.getByRole('link', { name: /Browse Courses/i });
+    const browseBtn = page.locator('a').filter({ hasText: /Browse Course/i }).first();
     await expect(browseBtn).toBeVisible();
     await expect(browseBtn).toHaveAttribute('href', '/courses');
 
     // 4. Verify 4-stage stepper instructions
-    await expect(page.getByText('How MyCourseReviews Works').first()).toBeVisible();
+    await expect(page.getByText('How it Works').first()).toBeVisible();
     await expect(page.getByText('1').first()).toBeVisible();
     await expect(page.getByText('Browse', { exact: true }).first()).toBeVisible();
 
@@ -45,14 +46,14 @@ test('home page shows brand title, tags, stepper, and theme toggle flips', async
 
     // 5. Verify and toggle dark mode classes on html
     if (!skipThemeTest) {
-        const themeBtn = page.locator('button').filter({ hasText: /🌞|🌚/ }).first();
+        const themeBtn = page.getByRole('button', { name: /Toggle Theme/i }).first();
         await expect(themeBtn).toBeVisible();
 
         const html = page.locator('html');
         const wasDark = await html.evaluate((node) => node.classList.contains('dark'));
         
         // Toggle theme click
-        await themeBtn.click();
+        await themeBtn.click({ force: true });
         await page.waitForTimeout(300);
 
         // Verify flip

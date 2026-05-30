@@ -334,8 +334,9 @@ export const EditReviewModal = ({ isOpen, onOpenChange, review, onSave }: EditRe
 
                             {/* Review Title Input */}
                             <div className="flex flex-col gap-2 font-mono">
-                                <label className="text-xs font-black uppercase text-foreground">Review Headline</label>
+                                <label htmlFor="edit-review-title" className="text-xs font-black uppercase text-foreground">Review Headline</label>
                                 <Input
+                                    id="edit-review-title"
                                     placeholder="e.g. Great lectures, tough exam!"
                                     radius="none"
                                     value={title}
@@ -351,8 +352,9 @@ export const EditReviewModal = ({ isOpen, onOpenChange, review, onSave }: EditRe
 
                             {/* Review Description Textarea */}
                             <div className="flex flex-col gap-2 font-mono">
-                                <label className="text-xs font-black uppercase text-foreground">Detailed Review Comments</label>
+                                <label htmlFor="edit-review-description" className="text-xs font-black uppercase text-foreground">Detailed Review Comments</label>
                                 <Textarea
+                                    id="edit-review-description"
                                     placeholder="Write your review here... Be as specific as possible to help future students!"
                                     radius="none"
                                     minRows={4}

@@ -199,6 +199,7 @@ export const Header = () => {
                             isIconOnly
                             variant="flat"
                             color="default"
+                            aria-label="Toggle Theme"
                             onPress={toggleTheme}
                             className="bg-background border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] text-lg rounded-none transition-all duration-200 h-9 w-9 min-w-9 p-0 flex items-center justify-center shrink-0"
                         >

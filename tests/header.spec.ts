@@ -1,10 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 test('header navigation bar renders branding and links successfully', async ({ page }) => {
+    // Suppress guide modal auto-popup
+    await page.addInitScript(() => {
+        localStorage.setItem('hasSeenGuide', 'true');
+    });
     await page.goto('/');
 
     // 1. Check brand branding container
-    const brand = page.getByRole('navigation').locator('span').filter({ hasText: 'MyCourse' }).first();
+    const brand = page.getByRole('navigation').locator('h1, span').filter({ hasText: 'MyCourse' }).first();
     await expect(brand).toBeVisible();
 
     // 2. Verify "How to Use Guide" icon button is rendering inside navbar
@@ -16,7 +20,7 @@ test('header navigation bar renders branding and links successfully', async ({ p
     await expect(feedbackLink).toBeVisible();
 
     // 3. Verify Theme Toggle is rendering inside navbar
-    const themeBtn = page.getByRole('navigation').locator('button').filter({ hasText: /🌞|🌚/ }).first();
+    const themeBtn = page.getByRole('button', { name: /Toggle Theme/i }).first();
     await expect(themeBtn).toBeVisible();
 
     // 4. Verify Auth CTA (Login button) is rendering inside navbar
