@@ -2,7 +2,7 @@ import { describe, it, beforeEach, mock } from 'node:test';
 import assert from 'node:assert';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
-import { ReviewToEdit } from '../EditReviewModal';
+import { ReviewToEdit } from '../../dashboard/EditReviewModal';
 
 // Mock @heroui/react before importing the component using modern Node 26 exports API
 mock.module('@heroui/react', {
@@ -26,7 +26,7 @@ mock.module('@heroui/react', {
 });
 
 // Dynamically import component after registering mocks
-const { EditReviewModal } = await import('../EditReviewModal');
+const { EditReviewModal } = await import('../../dashboard/EditReviewModal');
 
 const mockReviewToEdit: ReviewToEdit = {
     id: 'rev1',

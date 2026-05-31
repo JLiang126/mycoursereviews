@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { render, screen } from '@testing-library/react';
 
 // Dynamically import after bootstrap mocks are initialized
-const { Footer } = await import('../Footer');
+const { Footer } = await import('../../layout/Footer');
 
 describe('Footer Component', () => {
     it('renders the branding text and copyrights successfully', () => {

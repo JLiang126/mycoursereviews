@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { reviews } from '@/db/schema';
 import { CoursesApiClient } from '@/lib/courses-api';
-import { BrowseCoursesClient } from '@/components/BrowseCoursesClient';
+import { BrowseCoursesClient } from '@/components/browse/BrowseCoursesClient';
 
 // Ensure this page loads dynamic updates instantly
 export const dynamic = 'force-dynamic';

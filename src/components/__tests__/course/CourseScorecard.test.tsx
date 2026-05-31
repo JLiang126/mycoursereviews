@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { render, screen } from '@testing-library/react';
-import { CourseScorecard } from '../CourseScorecard';
+import { CourseScorecard } from '../../course/CourseScorecard';
 
 describe('CourseScorecard Component', () => {
     it('renders N/A when totalReviews is 0', () => {

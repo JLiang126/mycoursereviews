@@ -2,7 +2,7 @@ import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
-import { Review } from '../ReviewFeedCard';
+import { Review } from '../../course/ReviewFeedCard';
 
 // Mock framer-motion before importing using modern Node 26 exports API
 mock.module('framer-motion', {
@@ -33,7 +33,7 @@ mock.module('@heroui/react', {
     }
 });
 
-mock.module('../ModerationWarningModal', {
+mock.module('../../course/ModerationWarningModal', {
     exports: {
         ModerationWarningModal: ({ isOpen, onClose, message }: any) => (
             isOpen ? (
@@ -47,14 +47,14 @@ mock.module('../ModerationWarningModal', {
 });
 
 // Mock CommentThread component
-mock.module('../CommentThread', {
+mock.module('../../course/CommentThread', {
     exports: {
         CommentThread: ({ reviewId }: any) => React.createElement('div', { 'data-testid': 'mock-comment-thread' }, reviewId),
     }
 });
 
 // Dynamically import component after registering mocks
-const { ReviewFeedCard } = await import('../ReviewFeedCard');
+const { ReviewFeedCard } = await import('../../course/ReviewFeedCard');
 
 const mockReview: Review = {
     id: 'rev123',

@@ -4,8 +4,8 @@ import { clsx } from 'clsx';
 import { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 
-import { Footer } from '@/components/Footer';
-import { Header } from '@/components/Header';
+import { Footer } from '@/components/layout/Footer';
+import { Header } from '@/components/layout/Header';
 import { fontSans } from '@/config/fonts';
 import { siteConfig } from '@/config/site';
 import { env } from '@/env.mjs';

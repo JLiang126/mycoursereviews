@@ -5,7 +5,7 @@ import { auth } from '@/auth';
 import { db } from '@/db';
 import { comments, likes, reviews, users } from '@/db/schema';
 import { CoursesApiClient } from '@/lib/courses-api';
-import { CourseDetailClient } from '@/components/CourseDetailClient';
+import { CourseDetailClient } from '@/components/course/CourseDetailClient';
 import { getCourseUpdateVoteData } from '@/app/actions/courseUpdates';
 
 export const dynamic = 'force-dynamic';

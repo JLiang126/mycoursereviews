@@ -32,7 +32,7 @@ mock.module('@/lib/course-update-voting', {
 });
 
 // Dynamically import component after registering mocks
-const { LastMajorUpdateSection } = await import('../LastMajorUpdateSection');
+const { LastMajorUpdateSection } = await import('../../course/LastMajorUpdateSection');
 
 const mockVoteData = {
     consensusTerm: 'Semester 1, 2026',

@@ -1,42 +1,21 @@
 'use client';
-
-import {
-    Button,
-    Modal,
-    ModalBody,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    Select,
-    SelectItem,
-    useDisclosure,
-    Chip,
-} from '@heroui/react';
-import { signIn, useSession } from 'next-auth/react';
+import { Button, Select, SelectItem, useDisclosure, Chip } from '@heroui/react';
+import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
 import Link from 'next/link';
-import {
-    FaBookOpen,
-    FaClipboardList,
-    FaGraduationCap,
-    FaLock,
-    FaUserShield,
-    FaBuilding,
-    FaChalkboardTeacher,
-    FaInfoCircle,
-    FaCheckSquare,
-} from 'react-icons/fa';
-
+import { FaGraduationCap, FaBuilding, FaChalkboardTeacher, FaInfoCircle, FaCheckSquare } from 'react-icons/fa';
 import { addComment, toggleLike, deleteReview, deleteComment, updateComment, updateReview } from '@/app/actions/reviews';
 import { voteOnCourseUpdate } from '@/app/actions/courseUpdates';
 import { UpdateVoteData } from '@/lib/course-update-voting';
 import { CourseData } from '@/lib/courses-api';
 import { ReviewModal } from './ReviewModal';
-import { EditReviewModal, ReviewToEdit } from './EditReviewModal';
+import { EditReviewModal, ReviewToEdit } from '../dashboard/EditReviewModal';
 import { CourseScorecard } from './CourseScorecard';
 import { LastMajorUpdateSection } from './LastMajorUpdateSection';
 import { Review, ReviewFeedCard } from './ReviewFeedCard';
+import { CourseOverviewSection } from './CourseOverviewSection';
+import { AuthRequiredModal } from './AuthRequiredModal';
 
 interface CourseDetailClientProps {
     course: CourseData;
@@ -136,36 +115,15 @@ export const CourseDetailClient = ({ course, reviews, stats, updateVoteData, def
     };
 
     // Review Actions
-    const handleLike = async (reviewId: string) => {
-        await toggleLike(reviewId);
-    };
-
-    const handleReviewDelete = async (reviewId: string) => {
-        await deleteReview(reviewId);
-    };
-
-    const handleReviewEditClick = (review: Review) => {
-        setSelectedReviewForEdit(review);
-        onReviewEditOpen();
-    };
-
-    const handleReviewEditSave = async (formData: any) => {
-        if (!selectedReviewForEdit) return;
-        await updateReview(selectedReviewForEdit.id, formData);
-    };
+    const handleLike = async (reviewId: string) => { await toggleLike(reviewId); };
+    const handleReviewDelete = async (reviewId: string) => { await deleteReview(reviewId); };
+    const handleReviewEditClick = (review: Review) => { setSelectedReviewForEdit(review); onReviewEditOpen(); };
+    const handleReviewEditSave = async (formData: any) => { if (selectedReviewForEdit) await updateReview(selectedReviewForEdit.id, formData); };
 
     // Comment Actions
-    const handleCommentSubmit = async (reviewId: string, content: string, parentId?: string) => {
-        await addComment(reviewId, content, parentId);
-    };
-
-    const handleCommentEdit = async (commentId: string, content: string) => {
-        await updateComment(commentId, content);
-    };
-
-    const handleCommentDelete = async (commentId: string) => {
-        await deleteComment(commentId);
-    };
+    const handleCommentSubmit = async (reviewId: string, content: string, parentId?: string) => { await addComment(reviewId, content, parentId); };
+    const handleCommentEdit = async (commentId: string, content: string) => { await updateComment(commentId, content); };
+    const handleCommentDelete = async (commentId: string) => { await deleteComment(commentId); };
 
     // Sort Reviews Feed
     const sortedReviews = [...reviews].sort((a, b) => {
@@ -320,99 +278,8 @@ export const CourseDetailClient = ({ course, reviews, stats, updateVoteData, def
                             onAuthOpen={onAuthOpen}
                             session={session}
                         />
-
-                        {/* Description / Course Overview */}
-                        <div className="border-t-3 border-foreground pt-6">
-                            <h2 className="font-mixtape text-xs uppercase font-extrabold text-foreground/50 tracking-wider">Course Overview</h2>
-                            <p className="font-mono text-xs text-foreground/80 mt-3 leading-relaxed whitespace-pre-line">
-                                {course.description || 'No overview available. Please refer to the official Adelaide University website.'}
-                            </p>
-                        </div>
-
-                        {/* Prerequisites / Corequisites / Antirequisites */}
-                        {(course.prerequisites || course.corequisites || course.antirequisites) && (
-                            <div className="border-t-3 border-foreground pt-5 flex flex-col gap-3">
-                                <h2 className="text-sm font-extrabold uppercase text-foreground/50 tracking-wider">Requirements</h2>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    {course.prerequisites && (
-                                        <div className="bg-warning-50/10 border border-warning-200/30 rounded-xl p-3">
-                                            <p className="text-2xs font-extrabold uppercase text-warning-600 tracking-wider mb-1">Prerequisites</p>
-                                            <p className="text-xs text-foreground/75 leading-relaxed">{course.prerequisites}</p>
-                                        </div>
-                                    )}
-                                    {course.corequisites && (
-                                        <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-3">
-                                            <p className="text-2xs font-extrabold uppercase text-secondary tracking-wider mb-1">Corequisites</p>
-                                            <p className="text-xs text-foreground/75 leading-relaxed">{course.corequisites}</p>
-                                        </div>
-                                    )}
-                                    {course.antirequisites && (
-                                        <div className="bg-danger-50/10 border border-danger-200/30 rounded-xl p-3">
-                                            <p className="text-2xs font-extrabold uppercase text-danger tracking-wider mb-1">Antirequisites</p>
-                                            <p className="text-xs text-foreground/75 leading-relaxed">{course.antirequisites}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Assessments */}
-                        {course.assessments && course.assessments.length > 0 && (
-                            <div className="border-t border-divider pt-5">
-                                <h2 className="text-sm font-extrabold uppercase text-foreground/50 tracking-wider mb-3 flex items-center gap-2">
-                                    <FaClipboardList className="text-primary" /> Assessments
-                                </h2>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-xs">
-                                        <thead>
-                                            <tr className="border-b border-divider text-foreground/50 font-extrabold uppercase tracking-wider">
-                                                <th className="text-left pb-2 pr-4">Task</th>
-                                                <th className="text-right pb-2 pr-4">Weighting</th>
-                                                {course.assessments.some(a => a.hurdle) && (
-                                                    <th className="text-left pb-2">Hurdle</th>
-                                                )}
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-divider/40">
-                                            {course.assessments.map((a, i) => (
-                                                <tr key={i} className="text-foreground/75">
-                                                    <td className="py-2 pr-4 font-semibold">{a.title}</td>
-                                                    <td className="py-2 pr-4 text-right font-bold text-primary">{a.weighting}</td>
-                                                    {course.assessments!.some(x => x.hurdle) && (
-                                                        <td className="py-2 text-foreground/50">{a.hurdle || '—'}</td>
-                                                    )}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Learning Outcomes */}
-                        {course.learningOutcomes && course.learningOutcomes.length > 0 && (
-                            <div className="border-t border-divider pt-5">
-                                <h2 className="text-sm font-extrabold uppercase text-foreground/50 tracking-wider mb-3 flex items-center gap-2">
-                                    <FaBookOpen className="text-primary" /> Learning Outcomes
-                                </h2>
-                                <ol className="flex flex-col gap-2">
-                                    {course.learningOutcomes.map((lo) => (
-                                        <li key={lo.outcomeIndex} className="flex gap-3 text-xs text-foreground/75 leading-relaxed">
-                                            <span className="font-extrabold text-primary shrink-0 w-5 text-right">{lo.outcomeIndex}.</span>
-                                            <span>{lo.description}</span>
-                                        </li>
-                                    ))}
-                                </ol>
-                            </div>
-                        )}
-
-                        {/* Textbooks */}
-                        {course.textbooks && course.textbooks.trim() && course.textbooks.toLowerCase() !== 'no learning resources are required.' && (
-                            <div className="border-t border-divider pt-5">
-                                <h2 className="text-sm font-extrabold uppercase text-foreground/50 tracking-wider mb-2">Textbooks &amp; Resources</h2>
-                                <p className="text-xs text-foreground/70 leading-relaxed">{course.textbooks}</p>
-                            </div>
-                        )}
+                        {/* Description / Requirements / Assessments / Outcomes / Resources */}
+                        <CourseOverviewSection course={course} />
 
                     </div>
                 </div>
@@ -514,58 +381,10 @@ export const CourseDetailClient = ({ course, reviews, stats, updateVoteData, def
             />
 
             {/* Authentication Required Modal */}
-            <Modal
+            <AuthRequiredModal
                 isOpen={isAuthOpen}
                 onOpenChange={onAuthOpenChange}
-                backdrop="blur"
-                classNames={{
-                    base: "border-4 border-foreground rounded-none bg-background shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff] p-4 font-mono",
-                    closeButton: "rounded-none border border-foreground/30 hover:bg-foreground/10"
-                }}
-            >
-                <ModalContent>
-                    {(onClose) => (
-                        <>
-                            <ModalHeader className="flex flex-col gap-1 items-center pt-8">
-                                <div className="w-12 h-12 bg-grey text-black border-2 border-foreground rounded-full flex items-center justify-center mb-2 shadow-[2px_2px_0px_0px_#000] select-none">
-                                    <FaLock className="text-lg" />
-                                </div>
-                                <span className="text-xl font-extrabold text-foreground tracking-tight">Authentication Required</span>
-                            </ModalHeader>
-                            <ModalBody className="text-center px-6 py-4 flex flex-col gap-3">
-                                <p className="text-xs text-foreground/80 font-black uppercase tracking-wider">
-                                    By students, for students — Adelaide University's course guide.
-                                </p>
-                                <p className="text-xs text-foreground/80 leading-relaxed bg-background p-4 rounded-none border-2 border-foreground shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] text-left">
-                                    You need to be logged into your <span className="font-extrabold text-red">CS Club account</span> to write a review. This helps us ensure reviews are written by genuine students and maintain high academic standards.
-                                </p>
-                                <div className="flex items-center justify-center gap-2 text-2xs text-foreground/75 font-black uppercase bg-yellow/10 p-2.5 rounded-none border-2 border-dashed border-foreground/30">
-                                    <FaUserShield className="text-yellow text-xs shrink-0" />
-                                    <span>Posting anonymously is fully supported if checked on submission.</span>
-                                </div>
-                            </ModalBody>
-                            <ModalFooter className="flex justify-end gap-3 pt-4 px-6 pb-2">
-                                <Button
-                                    variant="flat"
-                                    onPress={onClose}
-                                    className="font-mono text-xs uppercase font-black bg-grey dark:bg-grey/25 text-foreground hover:bg-grey/80 border-2 border-foreground rounded-none h-9 px-4 cursor-pointer"
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    onPress={() => {
-                                        onClose();
-                                        signIn('keycloak');
-                                    }}
-                                    className="font-mono text-xs uppercase font-black bg-yellow text-black border-2 border-foreground rounded-none shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#000] dark:hover:shadow-[4px_4px_0px_0px_#fff] active:translate-x-[1px] active:translate-y-[1px] transition-all h-9 px-4 cursor-pointer"
-                                >
-                                    Log In with Keycloak
-                                </Button>
-                            </ModalFooter>
-                        </>
-                    )}
-                </ModalContent>
-            </Modal>
+            />
 
             {/* Custom Shared Edit Review Modal */}
             <EditReviewModal

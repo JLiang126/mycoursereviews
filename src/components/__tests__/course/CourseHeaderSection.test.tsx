@@ -20,7 +20,7 @@ mock.module('@heroui/react', {
 });
 
 // Dynamically import component after registering mocks
-const { CourseHeaderSection } = await import('../CourseHeaderSection');
+const { CourseHeaderSection } = await import('../../course/CourseHeaderSection');
 
 const mockCourse: CourseData = {
     code: 'COMP SCI 1102',

@@ -6,7 +6,7 @@ import { auth } from '@/auth';
 import { db } from '@/db';
 import { comments, reviews } from '@/db/schema';
 import { CoursesApiClient } from '@/lib/courses-api';
-import { MyReviewsClient } from '@/components/MyReviewsClient';
+import { MyReviewsClient } from '@/components/dashboard/MyReviewsClient';
 
 export const dynamic = 'force-dynamic';
 

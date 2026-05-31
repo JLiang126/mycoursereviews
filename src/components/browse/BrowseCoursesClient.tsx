@@ -1,14 +1,6 @@
 'use client';
 
-import {
-    Autocomplete,
-    AutocompleteItem,
-    Button,
-    Input,
-    Select,
-    SelectItem,
-    Spinner,
-} from '@heroui/react';
+import { Autocomplete, AutocompleteItem, Button, Input, Select, SelectItem, Spinner } from '@heroui/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FaFilter, FaSearch, FaTimes } from 'react-icons/fa';
 import { CourseCard } from './CourseCard';

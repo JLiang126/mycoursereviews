@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import { comments, likes, reviews, users } from '@/db/schema';
-import { AdminDashboardClient } from '@/components/AdminDashboardClient';
+import { AdminDashboardClient } from '@/components/admin/AdminDashboardClient';
 
 export const dynamic = 'force-dynamic';
 

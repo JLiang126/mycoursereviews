@@ -137,7 +137,7 @@ mock.module('@heroui/react', {
     }
 });
 
-mock.module('../ReviewModal', {
+mock.module('../../course/ReviewModal', {
     exports: {
         ReviewModal: () => React.createElement('div', { 'data-testid': 'mock-review-modal' }),
     }
@@ -147,7 +147,7 @@ mock.module('../ReviewModal', {
 const { useSession, signIn } = await import('next-auth/react');
 const { addComment, toggleLike, deleteReview, deleteComment, updateComment, updateReview } = await import('@/app/actions/reviews');
 const { voteOnCourseUpdate } = await import('@/app/actions/courseUpdates');
-const { CourseDetailClient } = await import('../CourseDetailClient');
+const { CourseDetailClient } = await import('../../course/CourseDetailClient');
 
 const mockCourse = {
     code: 'COMP SCI 1102',
