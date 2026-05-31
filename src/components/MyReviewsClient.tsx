@@ -19,7 +19,7 @@ interface MyReviewsClientProps {
 
 export const MyReviewsClient = ({ reviews, comments, courseMap }: MyReviewsClientProps) => {
     const [activeTab, setActiveTab] = useState<'reviews' | 'comments'>('reviews');
-    const [actionTransition, startActionTransition] = useTransition();
+    const [, startActionTransition] = useTransition();
 
     // Review Edit Modal States
     const { isOpen, onOpen, onOpenChange } = useDisclosure();

@@ -14,7 +14,6 @@ import {
     Slider,
     Textarea,
 } from '@heroui/react';
-import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { clsx } from 'clsx';
 import { MdStar } from 'react-icons/md';
@@ -85,8 +84,7 @@ interface ReviewModalProps {
     courseName: string;
 }
 
-export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: ReviewModalProps) => {
-    const router = useRouter();
+export const ReviewModal = ({ isOpen, onOpenChange, courseCode }: ReviewModalProps) => {
     const [isPending, startTransition] = useTransition();
 
     // Form States

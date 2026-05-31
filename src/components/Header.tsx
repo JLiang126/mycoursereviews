@@ -2,10 +2,6 @@
 
 import {
     Button,
-    Modal,
-    ModalBody,
-    ModalContent,
-    ModalHeader,
     Navbar,
     NavbarBrand,
     NavbarContent,
@@ -19,7 +15,7 @@ import { env } from '@/env.mjs';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
@@ -34,7 +30,6 @@ export const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [isGuideOpen, setIsGuideOpen] = useState(false);
-    const router = useRouter();
     const pathname = usePathname();
 
     useEffect(() => {

@@ -2,7 +2,7 @@ import { describe, it, beforeEach, mock } from 'node:test';
 import assert from 'node:assert';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
-import { Comment } from '../Comment';
+import { Comment } from '../CommentThread';
 
 // Mock @heroui/react before importing using modern Node 26 exports API
 mock.module('@heroui/react', {
@@ -61,16 +61,11 @@ describe('CommentThread Component', () => {
     let mockOnCommentSubmit: any;
     let mockOnCommentEdit: any;
     let mockOnCommentDelete: any;
-    let mockConfirm: any;
 
     beforeEach(() => {
         mockOnCommentSubmit = mock.fn(async () => {});
         mockOnCommentEdit = mock.fn(async () => {});
         mockOnCommentDelete = mock.fn(async () => {});
-
-        mockConfirm = mock.fn(() => true);
-        window.confirm = mockConfirm;
-        global.confirm = mockConfirm;
     });
 
     it('renders comments and nested threads successfully', () => {
@@ -153,6 +148,10 @@ describe('CommentThread Component', () => {
     });
 
     it('allows author or admin to delete a comment', async () => {
+        const confirmMock = mock.fn((_msg?: string) => true);
+        Object.defineProperty(window, 'confirm', { value: confirmMock, writable: true, configurable: true });
+        Object.defineProperty(global, 'confirm', { value: confirmMock, writable: true, configurable: true });
+
         render(
             <CommentThread
                 reviewId="rev1"
@@ -167,8 +166,8 @@ describe('CommentThread Component', () => {
         const deleteBtn = screen.getByRole('button', { name: 'Delete Comment' });
         fireEvent.click(deleteBtn);
 
-        assert.strictEqual(mockConfirm.mock.callCount(), 1);
-        assert.strictEqual(mockConfirm.mock.calls[0].arguments[0], 'Are you sure you want to delete this comment?');
+        assert.strictEqual(confirmMock.mock.callCount(), 1);
+        assert.strictEqual(confirmMock.mock.calls[0].arguments[0], 'Are you sure you want to delete this comment?');
         await waitFor(() => {
             assert.strictEqual(mockOnCommentDelete.mock.callCount(), 1);
             assert.strictEqual(mockOnCommentDelete.mock.calls[0].arguments[0], 'c1');
@@ -238,6 +237,9 @@ describe('CommentThread Component', () => {
     });
 
     it('alerts on delete comment error', async () => {
+        const confirmMock = mock.fn((_msg?: string) => true);
+        Object.defineProperty(window, 'confirm', { value: confirmMock, writable: true, configurable: true });
+        Object.defineProperty(global, 'confirm', { value: confirmMock, writable: true, configurable: true });
         mockOnCommentDelete = mock.fn(async () => {
             throw new Error('Delete comment failed');
         });

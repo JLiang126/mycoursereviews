@@ -9,7 +9,6 @@ import {
 } from '@heroui/react';
 import { useState, useEffect } from 'react';
 import { clsx } from 'clsx';
-import { FaQuestion } from 'react-icons/fa';
 
 interface HowToUseModalProps {
     isOpen: boolean;

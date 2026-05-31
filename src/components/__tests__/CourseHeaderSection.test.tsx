@@ -1,6 +1,5 @@
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { CourseData } from '@/lib/courses-api';
 

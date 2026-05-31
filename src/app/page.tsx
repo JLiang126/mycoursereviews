@@ -3,8 +3,6 @@
 import { Button, Card, CardBody } from '@heroui/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import {
     FaArrowRight,
@@ -14,10 +12,8 @@ import {
 import { MdStar } from 'react-icons/md';
 
 export default function WelcomePage() {
-    const { data: session, status } = useSession();
     const [mounted, setMounted] = useState(false);
     const [bubbles, setBubbles] = useState<any[]>([]);
-    const { resolvedTheme } = useTheme();
 
     useEffect(() => {
         setMounted(true);

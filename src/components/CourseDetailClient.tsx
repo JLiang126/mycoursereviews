@@ -13,7 +13,7 @@ import {
     Chip,
 } from '@heroui/react';
 import { signIn, useSession } from 'next-auth/react';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
 import Link from 'next/link';
 import {

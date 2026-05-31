@@ -1,8 +1,7 @@
 'use client';
 
-import { Divider, Modal, ModalBody, ModalContent, ModalHeader } from '@heroui/react';
+import { Modal, ModalBody, ModalContent, ModalHeader } from '@heroui/react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useState } from 'react';
 import {
     FaDiscord,

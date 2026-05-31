@@ -16,7 +16,6 @@ interface LastMajorUpdateSectionProps {
 }
 
 export const LastMajorUpdateSection = ({
-    courseCode,
     voteData,
     onVote,
     voteLoading,

@@ -12,7 +12,7 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "test:unit": "node --experimental-test-module-mocks --import tsx --import ./tests/bootstrap.ts --test \"src/**/*.test.ts\" \"src/**/*.test.tsx\"",
+    "test": "node --experimental-test-module-mocks --import tsx --import ./tests/bootstrap.ts --test \"src/**/*.test.ts\" \"src/**/*.test.tsx\"",
     "test:playwright": "playwright test"
   },
   "dependencies": {

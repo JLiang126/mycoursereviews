@@ -1,6 +1,5 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { CourseScorecard } from '../CourseScorecard';
 
