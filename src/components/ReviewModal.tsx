@@ -23,11 +23,49 @@ import { z } from 'zod';
 import { submitReview } from '@/app/actions/reviews';
 import { TermsAndConditionsModal } from './TermsAndConditionsModal';
 import { TERMS_OPTIONS, GRADE_OPTIONS } from '@/config/site';
+import { checkTextForProfanity } from '@/lib/profanity';
+import { checkTextForSpam } from '@/lib/spam';
 
 // Schema matching Server Action validation
 const ReviewFormSchema = z.object({
-    title: z.string().min(3, 'Title must be at least 3 characters').max(100),
-    description: z.string().min(10, 'Description must be at least 10 characters').max(2000),
+    title: z.string()
+        .min(3, 'Title must be at least 3 characters')
+        .max(100)
+        .superRefine((val, ctx) => {
+            if (checkTextForProfanity(val).containsProfanity) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'Profanity or bad sentiment detected. Please write a meaningful, constructive response.',
+                });
+            }
+        }),
+    description: z.string()
+        .min(10, 'Description must be at least 10 characters')
+        .max(2000)
+        .superRefine((val, ctx) => {
+            const wordCount = val.trim().split(/\s+/).filter(Boolean).length;
+            if (wordCount < 20) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'Review description must be at least 20 words',
+                });
+                return;
+            }
+            if (checkTextForProfanity(val).containsProfanity) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'Profanity or bad sentiment detected. Please write a meaningful, constructive response.',
+                });
+                return;
+            }
+            const spamCheck = checkTextForSpam(val);
+            if (spamCheck.isSpam) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: spamCheck.errorMsg || 'Spam detected. Please write a meaningful, constructive response.',
+                });
+            }
+        }),
     overallRating: z.number().int().min(1).max(5),
     difficultyScore: z.number().min(0.5).max(5),
     usefulnessScore: z.number().min(0.5).max(5),
@@ -140,12 +178,6 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                         </ModalHeader>
 
                         <ModalBody className="gap-6 py-4">
-                            
-                            {errors.submit && (
-                                <div className="text-xs text-red-500 bg-red-500/10 border-2 border-red-500/20 p-3 rounded-none font-mono font-black">
-                                    {errors.submit}
-                                </div>
-                            )}
 
                             {/* Overall 5-star Selector */}
                             <div className="flex flex-col gap-2 font-mono">
@@ -402,6 +434,11 @@ export const ReviewModal = ({ isOpen, onOpenChange, courseCode, courseName }: Re
                                 )}
                             </div>
 
+                            {errors.submit && (
+                                <div className="text-xs text-red-500 bg-red-500/10 border-2 border-red-500/20 p-3 rounded-none font-mono font-black">
+                                    {errors.submit}
+                                </div>
+                            )}
                         </ModalBody>
 
                         <ModalFooter className="border-t-3 border-foreground px-6 py-4">

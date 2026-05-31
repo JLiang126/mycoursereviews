@@ -18,14 +18,26 @@ jest.mock('@heroui/react', () => ({
     ),
     Card: ({ children, ...props }: any) => <div {...props}>{children}</div>,
     CardBody: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    Textarea: ({ value, onValueChange, placeholder, radius, size, classNames, minRows, ...props }: any) => (
+    Textarea: ({ value, onValueChange, placeholder, radius, size, classNames, minRows, isDisabled, ...props }: any) => (
         <textarea
             value={value}
             onChange={(e) => onValueChange && onValueChange(e.target.value)}
             placeholder={placeholder}
+            disabled={isDisabled}
             {...props}
         />
     ),
+}));
+
+jest.mock('../ModerationWarningModal', () => ({
+    ModerationWarningModal: ({ isOpen, onClose, message }: any) => (
+        isOpen ? (
+            <div data-testid="moderation-warning-modal">
+                <span data-testid="moderation-warning-message">{message}</span>
+                <button onClick={onClose} data-testid="close-warning-btn">Close Warning</button>
+            </div>
+        ) : null
+    )
 }));
 
 // Mock CommentThread component
@@ -355,7 +367,8 @@ describe('ReviewFeedCard Component', () => {
         const submitBtn = screen.getByRole('button', { name: 'Add a Comment' });
         fireEvent.click(submitBtn);
 
-        expect(window.alert).toHaveBeenCalledWith('Comment cannot be empty.');
+        expect(screen.getByTestId('moderation-warning-modal')).toBeInTheDocument();
+        expect(screen.getByTestId('moderation-warning-message')).toHaveTextContent('Comment cannot be empty.');
         expect(mockOnCommentSubmit).not.toHaveBeenCalled();
     });
 
@@ -404,13 +417,14 @@ describe('ReviewFeedCard Component', () => {
         fireEvent.click(commentFeedBtn);
 
         const commentTextarea = screen.getByPlaceholderText('Write a comment...');
-        fireEvent.change(commentTextarea, { target: { value: 'This comment will fail' } });
+        fireEvent.change(commentTextarea, { target: { value: 'This comment is going to fail' } });
 
         const submitBtn = screen.getByRole('button', { name: 'Add a Comment' });
         fireEvent.click(submitBtn);
 
         await waitFor(() => {
-            expect(window.alert).toHaveBeenCalledWith('Comment submission failed');
+            expect(screen.getByTestId('moderation-warning-modal')).toBeInTheDocument();
+            expect(screen.getByTestId('moderation-warning-message')).toHaveTextContent('Comment submission failed');
         });
     });
 });

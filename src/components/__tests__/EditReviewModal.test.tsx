@@ -95,7 +95,7 @@ jest.mock('@heroui/react', () => ({
 const mockReviewToEdit: ReviewToEdit = {
     id: 'rev1',
     title: 'Awesome course',
-    description: 'Highly detailed introduction to OOP models.',
+    description: 'This course was an absolutely fantastic and highly detailed introduction to object-oriented programming models and design patterns. Highly recommended indeed!',
     overallRating: 5,
     difficultyScore: 3,
     usefulnessScore: 4,
@@ -126,7 +126,7 @@ describe('EditReviewModal Component', () => {
 
         expect(screen.getByText('Edit Your Review')).toBeInTheDocument();
         expect(screen.getByLabelText('Review Headline')).toHaveValue('Awesome course');
-        expect(screen.getByLabelText('Detailed Review Comments')).toHaveValue('Highly detailed introduction to OOP models.');
+        expect(screen.getByLabelText('Detailed Review Comments')).toHaveValue('This course was an absolutely fantastic and highly detailed introduction to object-oriented programming models and design patterns. Highly recommended indeed!');
     });
 
     it('triggers save callback with updated inputs when submitted successfully', async () => {
@@ -148,7 +148,7 @@ describe('EditReviewModal Component', () => {
         await waitFor(() => {
             expect(mockOnSave).toHaveBeenCalledWith(expect.objectContaining({
                 title: 'New awesome title',
-                description: 'Highly detailed introduction to OOP models.',
+                description: 'This course was an absolutely fantastic and highly detailed introduction to object-oriented programming models and design patterns. Highly recommended indeed!',
                 overallRating: 5,
                 difficultyScore: 3,
                 usefulnessScore: 4,

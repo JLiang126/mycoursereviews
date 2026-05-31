@@ -7,6 +7,8 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import { comments, likes, reviews, users } from '@/db/schema';
+import { checkTextForProfanity } from '@/lib/profanity';
+import { validateReviewDescription, validateCommentContent } from '@/lib/spam';
 
 // Zod Schema to validate Review submissions
 const ReviewSchema = z.object({
@@ -38,6 +40,22 @@ export async function submitReview(input: ReviewInput) {
 
     // Validate request schema
     const validated = ReviewSchema.parse(input);
+
+    // Check profanity / bad sentiment
+    const titleCheck = checkTextForProfanity(validated.title);
+    if (titleCheck.containsProfanity) {
+        throw new Error(titleCheck.errorMsg);
+    }
+    const descCheck = checkTextForProfanity(validated.description);
+    if (descCheck.containsProfanity) {
+        throw new Error(descCheck.errorMsg);
+    }
+
+    // Check spam / word count
+    const descValidation = validateReviewDescription(validated.description);
+    if (!descValidation.isValid) {
+        throw new Error(descValidation.errorMsg);
+    }
 
     // Ensure the user exists in our local DB (Keycloak session may outlive a DB reset/migration).
     // We upsert here so the review FK constraint is always satisfied.
@@ -139,6 +157,18 @@ export async function addComment(reviewId: string, content: string, parentId?: s
 
     if (!content || content.trim().length === 0) {
         throw new Error('Comment content cannot be empty.');
+    }
+
+    // Check spam / word count
+    const commentValidation = validateCommentContent(content);
+    if (!commentValidation.isValid) {
+        throw new Error(commentValidation.errorMsg);
+    }
+
+    // Check profanity / bad sentiment
+    const commentCheck = checkTextForProfanity(content);
+    if (commentCheck.containsProfanity) {
+        throw new Error(commentCheck.errorMsg);
     }
 
     // Ensure user record exists in local DB (session may outlive a DB migration/reset)
@@ -270,6 +300,22 @@ export async function updateReview(reviewId: string, input: z.infer<typeof Updat
 
     const validated = UpdateReviewSchema.parse(input);
 
+    // Check profanity / bad sentiment
+    const titleCheck = checkTextForProfanity(validated.title);
+    if (titleCheck.containsProfanity) {
+        throw new Error(titleCheck.errorMsg);
+    }
+    const descCheck = checkTextForProfanity(validated.description);
+    if (descCheck.containsProfanity) {
+        throw new Error(descCheck.errorMsg);
+    }
+
+    // Check spam / word count
+    const descValidation = validateReviewDescription(validated.description);
+    if (!descValidation.isValid) {
+        throw new Error(descValidation.errorMsg);
+    }
+
     const review = await db.query.reviews.findFirst({
         where: eq(reviews.id, reviewId),
     });
@@ -314,6 +360,18 @@ export async function updateComment(commentId: string, content: string) {
 
     if (!content || content.trim().length === 0) {
         throw new Error('Comment content cannot be empty.');
+    }
+
+    // Check spam / word count
+    const commentValidation = validateCommentContent(content);
+    if (!commentValidation.isValid) {
+        throw new Error(commentValidation.errorMsg);
+    }
+
+    // Check profanity / bad sentiment
+    const commentCheck = checkTextForProfanity(content);
+    if (commentCheck.containsProfanity) {
+        throw new Error(commentCheck.errorMsg);
     }
 
     const comment = await db.query.comments.findFirst({

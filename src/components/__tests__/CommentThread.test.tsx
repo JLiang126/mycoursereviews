@@ -9,14 +9,26 @@ jest.mock('@heroui/react', () => ({
             {children}
         </button>
     ),
-    Textarea: ({ value, onValueChange, placeholder, radius, minRows, classNames, size, ...props }: any) => (
+    Textarea: ({ value, onValueChange, placeholder, radius, minRows, classNames, size, isDisabled, ...props }: any) => (
         <textarea
             value={value}
             onChange={(e) => onValueChange && onValueChange(e.target.value)}
             placeholder={placeholder}
+            disabled={isDisabled}
             {...props}
         />
     ),
+}));
+
+jest.mock('../ModerationWarningModal', () => ({
+    ModerationWarningModal: ({ isOpen, onClose, message }: any) => (
+        isOpen ? (
+            <div data-testid="moderation-warning-modal">
+                <span data-testid="moderation-warning-message">{message}</span>
+                <button onClick={onClose} data-testid="close-warning-btn">Close Warning</button>
+            </div>
+        ) : null
+    )
 }));
 
 const mockComments: Comment[] = [
@@ -84,13 +96,13 @@ describe('CommentThread Component', () => {
         fireEvent.click(replyButtons[0]);
 
         const replyInput = screen.getByPlaceholderText(/reply to Alice/i);
-        fireEvent.change(replyInput, { target: { value: 'My reply text' } });
+        fireEvent.change(replyInput, { target: { value: 'This is my reply text' } });
 
         const submitButton = screen.getAllByRole('button', { name: 'Reply' }).find(btn => btn.className.includes('bg-blue'))!;
         fireEvent.click(submitButton);
 
         await waitFor(() => {
-            expect(mockOnCommentSubmit).toHaveBeenCalledWith('rev1', 'My reply text', 'c1');
+            expect(mockOnCommentSubmit).toHaveBeenCalledWith('rev1', 'This is my reply text', 'c1');
         });
     });
 
@@ -145,8 +157,6 @@ describe('CommentThread Component', () => {
     });
 
     it('alerts on reply submission error', async () => {
-        const originalAlert = window.alert;
-        window.alert = jest.fn();
         mockOnCommentSubmit.mockRejectedValue(new Error('Submit reply failed'));
 
         render(
@@ -164,20 +174,18 @@ describe('CommentThread Component', () => {
         fireEvent.click(replyButtons[0]);
 
         const replyInput = screen.getByPlaceholderText(/reply to Alice/i);
-        fireEvent.change(replyInput, { target: { value: 'Fail reply text' } });
+        fireEvent.change(replyInput, { target: { value: 'This reply is going to fail' } });
 
         const submitButton = screen.getAllByRole('button', { name: 'Reply' }).find(btn => btn.className.includes('bg-blue'))!;
         fireEvent.click(submitButton);
 
         await waitFor(() => {
-            expect(window.alert).toHaveBeenCalledWith('Submit reply failed');
+            expect(screen.getByTestId('moderation-warning-modal')).toBeInTheDocument();
+            expect(screen.getByTestId('moderation-warning-message')).toHaveTextContent('Submit reply failed');
         });
-        window.alert = originalAlert;
     });
 
     it('alerts on edit submission error', async () => {
-        const originalAlert = window.alert;
-        window.alert = jest.fn();
         mockOnCommentEdit.mockRejectedValue(new Error('Edit comment failed'));
 
         render(
@@ -195,20 +203,18 @@ describe('CommentThread Component', () => {
         fireEvent.click(editBtn);
 
         const editTextarea = screen.getByDisplayValue('This is the main comment');
-        fireEvent.change(editTextarea, { target: { value: 'Fail edit text' } });
+        fireEvent.change(editTextarea, { target: { value: 'This edit is going to fail' } });
 
         const saveBtn = screen.getByRole('button', { name: 'Save' });
         fireEvent.click(saveBtn);
 
         await waitFor(() => {
-            expect(window.alert).toHaveBeenCalledWith('Edit comment failed');
+            expect(screen.getByTestId('moderation-warning-modal')).toBeInTheDocument();
+            expect(screen.getByTestId('moderation-warning-message')).toHaveTextContent('Edit comment failed');
         });
-        window.alert = originalAlert;
     });
 
     it('alerts on delete comment error', async () => {
-        const originalAlert = window.alert;
-        window.alert = jest.fn();
         window.confirm = jest.fn(() => true);
         mockOnCommentDelete.mockRejectedValue(new Error('Delete comment failed'));
 
@@ -227,8 +233,8 @@ describe('CommentThread Component', () => {
         fireEvent.click(deleteBtn);
 
         await waitFor(() => {
-            expect(window.alert).toHaveBeenCalledWith('Delete comment failed');
+            expect(screen.getByTestId('moderation-warning-modal')).toBeInTheDocument();
+            expect(screen.getByTestId('moderation-warning-message')).toHaveTextContent('Delete comment failed');
         });
-        window.alert = originalAlert;
     });
 });

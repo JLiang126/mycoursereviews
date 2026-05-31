@@ -97,7 +97,7 @@ export const AdminDashboardClient = ({ reviews, comments, stats }: AdminDashboar
                     Moderation Dashboard
                 </h1>
                 <p className="text-sm text-foreground/60 mt-3 font-bold uppercase">
-                    Manage Adelaide University course reviews, analyze platform statistics, and moderate reports.
+                    Manage Adelaide University course reviews, analyse platform statistics, and moderate reports.
                 </p>
             </div>
 
