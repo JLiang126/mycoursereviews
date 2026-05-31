@@ -10,16 +10,22 @@ import {
     Select,
     SelectItem,
     useDisclosure,
+    Chip,
 } from '@heroui/react';
 import { signIn, useSession } from 'next-auth/react';
 import { useEffect, useState, useTransition } from 'react';
 import { clsx } from 'clsx';
+import Link from 'next/link';
 import {
     FaBookOpen,
     FaClipboardList,
     FaGraduationCap,
     FaLock,
     FaUserShield,
+    FaBuilding,
+    FaChalkboardTeacher,
+    FaInfoCircle,
+    FaCheckSquare,
 } from 'react-icons/fa';
 
 import { addComment, toggleLike, deleteReview, deleteComment, updateComment, updateReview } from '@/app/actions/reviews';
@@ -28,7 +34,6 @@ import { UpdateVoteData } from '@/lib/course-update-voting';
 import { CourseData } from '@/lib/courses-api';
 import { ReviewModal } from './ReviewModal';
 import { EditReviewModal, ReviewToEdit } from './EditReviewModal';
-import { CourseHeaderSection } from './CourseHeaderSection';
 import { CourseScorecard } from './CourseScorecard';
 import { LastMajorUpdateSection } from './LastMajorUpdateSection';
 import { Review, ReviewFeedCard } from './ReviewFeedCard';
@@ -193,16 +198,117 @@ export const CourseDetailClient = ({ course, reviews, stats, updateVoteData, def
         <div className="flex flex-col gap-8 md:gap-12 bg-grid-sheet mx-[-1.5rem] sm:mx-[-2rem] mt-[-2rem] px-6 sm:px-8 py-8 w-[calc(100%+3rem)] sm:w-[calc(100%+4rem)] min-h-screen items-center">
             <div className="max-w-screen-xl w-full flex flex-col gap-6">
 
-            <CourseHeaderSection course={course} />
+            {/* Top Navigation Row */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full pb-4">
+                <Button
+                    as={Link}
+                    href="/courses"
+                    size="sm"
+                    variant="flat"
+                    className="font-mono uppercase font-black text-xs border-2 border-foreground bg-yellow text-black rounded-none shadow-[3px_3px_0px_0px_#000] rotate-[-2deg] hover:rotate-0 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+                >
+                    &larr; Back to Courses
+                </Button>
+                {!course.isNoLongerOffered && (
+                    <Button
+                        as="a"
+                        href={course.officialLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="sm"
+                        className="font-mono uppercase font-black text-xs border-2 border-foreground bg-blue text-black rounded-none shadow-[3px_3px_0px_0px_#000] rotate-[2deg] hover:rotate-0 hover:scale-105 active:scale-95 transition-all duration-200 px-4 py-2 w-fit flex items-center gap-2 cursor-pointer"
+                    >
+                        View Official Course Outline &rarr;
+                    </Button>
+                )}
+            </div>
 
-            {/* Split Page Layout — tops aligned by items-stretch */}
+            {/* Split Page Layout*/}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 items-start w-full">
                 
                 {/* Left Column (2/3 Width - lg:col-span-2) */}
                 <div className="lg:col-span-2 flex flex-col w-full">
 
-                    {/* Unified Course Details Card (Combined with Scorecard) */}
+                    {/* Unified Course Details Card */}
                     <div className="flex flex-col gap-6 bg-background border-4 border-foreground p-6 sm:p-8 rounded-none shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff] w-full h-full">
+                        
+                        {/* Title, Terms & Tag Info */}
+                        <div className="flex flex-col gap-4">
+                            <div>
+                                <span className="font-mixtape text-xs uppercase font-extrabold text-black bg-yellow border-2 border-foreground px-3 py-1 w-fit shadow-[2px_2px_0px_0px_#000] rotate-[-2deg] inline-block">
+                                    {course.code}
+                                </span>
+                                <h1 className="font-mixtape uppercase tracking-tighter text-3xl sm:text-5xl font-black mt-3 leading-none text-foreground">
+                                    {course.name}
+                                </h1>
+                                <div className="flex flex-wrap gap-1.5 mt-4">
+                                    {course.terms.map((term) => (
+                                        <Chip
+                                            key={term}
+                                            size="sm"
+                                            radius="none"
+                                            className={clsx(
+                                                "border-2 border-foreground font-mono text-3xs font-extrabold",
+                                                term === 'No Longer Offered'
+                                                    ? "bg-red text-white animate-pulse-custom"
+                                                    : "bg-blue text-black"
+                                            )}
+                                        >
+                                            {term}
+                                        </Chip>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Warning Banner */}
+                            {course.isNoLongerOffered && (
+                                <div className="flex items-start gap-3 bg-red/10 border-3 border-red p-4 rounded-none shadow-[3px_3px_0px_0px_#d11149] font-mono mt-2">
+                                    <span className="text-red text-xl mt-0.5 shrink-0">⚠</span>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-red text-xs font-black uppercase tracking-wider">Course No Longer Offered</span>
+                                        <p className="text-foreground/80 text-xs leading-relaxed">
+                                            This course is no longer offered by Adelaide University. Historical student reviews are preserved below for reference only.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Quick info tags */}
+                            {(course.coordinator || course.campus || course.units || course.levelOfStudy || course.universityWideElective) && (
+                                <div className="flex flex-wrap gap-2.5 bg-foreground/5 border-2 border-dashed border-foreground/30 p-4 rounded-none font-mono text-xs mt-2">
+                                    {course.coordinator && (
+                                        <div className="flex items-center gap-1.5 text-xs font-black bg-red text-white px-2.5 py-1 border-2 border-foreground shadow-[1.5px_1.5px_0px_0px_#000] rotate-[-0.5deg]">
+                                            <FaChalkboardTeacher />
+                                            COORDINATOR: {course.coordinator}
+                                        </div>
+                                    )}
+                                    {course.campus && (
+                                        <div className="flex items-center gap-1.5 text-xs font-black bg-blue text-white px-2.5 py-1 border-2 border-foreground shadow-[1.5px_1.5px_0px_0px_#000] rotate-[0.5deg]">
+                                            <FaBuilding />
+                                            CAMPUS: {course.campus}
+                                        </div>
+                                    )}
+                                    {course.units && (
+                                        <div className="flex items-center gap-1.5 text-xs font-black bg-purple text-white px-2.5 py-1 border-2 border-foreground shadow-[1.5px_1.5px_0px_0px_#000] rotate-[-0.5deg]">
+                                            <FaInfoCircle />
+                                            UNITS: {course.units}
+                                        </div>
+                                    )}
+                                    {course.levelOfStudy && (
+                                        <div className="flex items-center gap-1.5 text-xs font-black bg-orange text-white px-2.5 py-1 border-2 border-foreground shadow-[1.5px_1.5px_0px_0px_#000] rotate-[0.5deg]">
+                                            <FaChalkboardTeacher />
+                                            LEVEL: {course.levelOfStudy}
+                                        </div>
+                                    )}
+                                    {course.universityWideElective && (
+                                        <div className="flex items-center gap-1.5 text-xs font-black bg-yellow text-black px-2.5 py-1 border-2 border-foreground shadow-[1.5px_1.5px_0px_0px_#000] rotate-[-0.5deg]">
+                                            <FaCheckSquare className="w-3.5 h-3.5 shrink-0" />
+                                            ELECTIVE: YES
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                         
                         <CourseScorecard stats={stats} />
 
@@ -312,22 +418,7 @@ export const CourseDetailClient = ({ course, reviews, stats, updateVoteData, def
                 </div>
 
                 {/* Right Column (1/3 Width - lg:col-span-1) */}
-                <div className="lg:col-span-1 flex flex-col gap-5 w-full relative">
-                    {/* View Official Course Outline Button (Top Right, Rotated Right) */}
-                    {!course.isNoLongerOffered && (
-                        <div className="absolute -top-[52px] right-2 z-10">
-                            <Button
-                                as="a"
-                                href={course.officialLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                size="sm"
-                                className="font-mono uppercase font-black text-xs border-2 border-foreground bg-blue text-black rounded-none shadow-[3px_3px_0px_0px_#000] rotate-[2deg] hover:rotate-0 hover:scale-105 active:scale-95 transition-all duration-200 px-4 py-2 w-fit flex items-center gap-2 cursor-pointer"
-                            >
-                                View Official Course Outline &rarr;
-                            </Button>
-                        </div>
-                    )}
+                <div className="lg:col-span-1 flex flex-col gap-5 w-full">
 
                     {/* Student Reviews Box */}
                     <div className="flex flex-col gap-5 bg-background border-4 border-foreground p-5 rounded-none shadow-[6px_6px_0px_0px_#000] dark:shadow-[6px_6px_0px_0px_#fff] w-full">
