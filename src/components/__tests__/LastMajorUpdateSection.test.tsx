@@ -1,35 +1,38 @@
+import { describe, it, beforeEach, mock } from 'node:test';
+import assert from 'node:assert';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { LastMajorUpdateSection } from '../LastMajorUpdateSection';
+import React from 'react';
 
-jest.mock('@heroui/react', () => ({
-    Select: ({ children, label, value, onChange, selectedKeys, onSelectionChange, classNames, popoverProps, listboxProps, radius, errorMessage, isInvalid, size, placeholder, ...props }: any) => {
-        const val = selectedKeys ? Array.from(selectedKeys)[0] : value;
-        return (
-            <div data-testid="mock-select" {...props}>
-                <label>{label}</label>
-                <select
-                    value={val || ''}
-                    onChange={(e) => {
+// Mock @heroui/react before importing the component using modern Node 26 exports API
+mock.module('@heroui/react', {
+    exports: {
+        Select: ({ children, label, value, onChange, selectedKeys, onSelectionChange, classNames, popoverProps, listboxProps, radius, errorMessage, isInvalid, size, placeholder, ...props }: any) => {
+            const val = selectedKeys ? Array.from(selectedKeys)[0] : value;
+            return React.createElement('div', { 'data-testid': 'mock-select', ...props },
+                React.createElement('label', null, label),
+                React.createElement('select', {
+                    value: val || '',
+                    onChange: (e: any) => {
                         if (onChange) onChange(e);
                         if (onSelectionChange) onSelectionChange(new Set([e.target.value]));
-                    }}
-                >
-                    {children}
-                </select>
-            </div>
-        );
-    },
-    SelectItem: ({ children, value, textValue, className, ...props }: any) => (
-        <option value={value || textValue} {...props}>
-            {children}
-        </option>
-    ),
-}));
+                    }
+                }, children)
+            );
+        },
+        SelectItem: ({ children, value, textValue, className, ...props }: any) => (
+            React.createElement('option', { value: value || textValue, ...props }, children)
+        ),
+    }
+});
 
-jest.mock('@/lib/course-update-voting', () => ({
-    UPDATE_TERM_OPTIONS: ['Semester 1, 2026', 'Semester 2, 2026', 'Summer School, 2026'],
-}));
+mock.module('@/lib/course-update-voting', {
+    exports: {
+        UPDATE_TERM_OPTIONS: ['Semester 1, 2026', 'Semester 2, 2026', 'Summer School, 2026'],
+    }
+});
+
+// Dynamically import component after registering mocks
+const { LastMajorUpdateSection } = await import('../LastMajorUpdateSection');
 
 const mockVoteData = {
     consensusTerm: 'Semester 1, 2026',
@@ -40,12 +43,12 @@ const mockVoteData = {
 };
 
 describe('LastMajorUpdateSection Component', () => {
-    let mockOnVote: jest.Mock;
-    let mockOnAuthOpen: jest.Mock;
+    let mockOnVote: any;
+    let mockOnAuthOpen: any;
 
     beforeEach(() => {
-        mockOnVote = jest.fn().mockResolvedValue(undefined);
-        mockOnAuthOpen = jest.fn();
+        mockOnVote = mock.fn(async () => {});
+        mockOnAuthOpen = mock.fn();
     });
 
     it('renders current consensus and counts successfully', () => {
@@ -60,11 +63,11 @@ describe('LastMajorUpdateSection Component', () => {
             />
         );
 
-        expect(screen.getByText('Last Major Update')).toBeInTheDocument();
-        expect(screen.getByText('Semester 1, 2026')).toBeInTheDocument();
-        expect(screen.getByText('4 votes')).toBeInTheDocument();
-        expect(screen.getByText('Correct')).toBeInTheDocument();
-        expect(screen.getByText('Outdated')).toBeInTheDocument();
+        assert.ok(screen.getByText('Last Major Update'));
+        assert.ok(screen.getByText('Semester 1, 2026'));
+        assert.ok(screen.getByText('4 votes'));
+        assert.ok(screen.getByText('Correct'));
+        assert.ok(screen.getByText('Outdated'));
     });
 
     it('calls onVote with consensus term when Correct is clicked', async () => {
@@ -83,7 +86,8 @@ describe('LastMajorUpdateSection Component', () => {
         fireEvent.click(correctBtn);
 
         await waitFor(() => {
-            expect(mockOnVote).toHaveBeenCalledWith('Semester 1, 2026');
+            assert.strictEqual(mockOnVote.mock.callCount(), 1);
+            assert.strictEqual(mockOnVote.mock.calls[0].arguments[0], 'Semester 1, 2026');
         });
     });
 
@@ -102,8 +106,8 @@ describe('LastMajorUpdateSection Component', () => {
         const outdatedBtn = screen.getByRole('button', { name: /outdated/i });
         fireEvent.click(outdatedBtn);
 
-        expect(mockOnAuthOpen).toHaveBeenCalled();
-        expect(screen.queryByTestId('mock-select')).not.toBeInTheDocument();
+        assert.strictEqual(mockOnAuthOpen.mock.callCount(), 1);
+        assert.strictEqual(screen.queryByTestId('mock-select'), null);
     });
 
     it('opens dispute term selector on Outdated click if user is logged in', () => {
@@ -121,7 +125,7 @@ describe('LastMajorUpdateSection Component', () => {
         const outdatedBtn = screen.getByRole('button', { name: /outdated/i });
         fireEvent.click(outdatedBtn);
 
-        expect(screen.getByTestId('mock-select')).toBeInTheDocument();
+        assert.ok(screen.getByTestId('mock-select'));
     });
 
     it('renders user suggested vote chip when currentUserVote is different from consensusTerm', () => {
@@ -139,6 +143,6 @@ describe('LastMajorUpdateSection Component', () => {
                 session={{ user: { id: 'u1' } }}
             />
         );
-        expect(screen.getByText('You suggested: Semester 2, 2026')).toBeInTheDocument();
+        assert.ok(screen.getByText('You suggested: Semester 2, 2026'));
     });
 });

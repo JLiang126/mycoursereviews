@@ -1,109 +1,129 @@
+import { describe, it, beforeEach, mock } from 'node:test';
+import assert from 'node:assert';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { CourseDetailClient } from '../CourseDetailClient';
-import { useSession, signIn } from 'next-auth/react';
-import { addComment, toggleLike, deleteReview, deleteComment, updateComment, updateReview } from '@/app/actions/reviews';
-import { voteOnCourseUpdate } from '@/app/actions/courseUpdates';
+import React from 'react';
 
-jest.mock('next-auth/react', () => ({
-    useSession: jest.fn(),
-    signIn: jest.fn(),
-}));
+// Register mocks before dynamic imports using modern Node 26 exports API
+mock.module('next-auth/react', {
+    exports: {
+        useSession: mock.fn(),
+        signIn: mock.fn(),
+    }
+});
 
-jest.mock('@/app/actions/reviews', () => ({
-    addComment: jest.fn(),
-    toggleLike: jest.fn(),
-    deleteReview: jest.fn(),
-    deleteComment: jest.fn(),
-    updateComment: jest.fn(),
-    updateReview: jest.fn(),
-}));
+mock.module('@/app/actions/reviews', {
+    exports: {
+        addComment: mock.fn(),
+        toggleLike: mock.fn(),
+        deleteReview: mock.fn(),
+        deleteComment: mock.fn(),
+        updateComment: mock.fn(),
+        updateReview: mock.fn(),
+    }
+});
 
-jest.mock('@/app/actions/courseUpdates', () => ({
-    voteOnCourseUpdate: jest.fn(),
-}));
+mock.module('@/app/actions/courseUpdates', {
+    exports: {
+        voteOnCourseUpdate: mock.fn(),
+    }
+});
 
-jest.mock('@/lib/course-update-voting', () => ({
-    UPDATE_TERM_OPTIONS: ['Semester 1, 2026', 'Semester 2, 2026'],
-    DEFAULT_LAST_UPDATE: 'Semester 1, 2026',
-}));
+mock.module('@/lib/course-update-voting', {
+    exports: {
+        UPDATE_TERM_OPTIONS: ['Semester 1, 2026', 'Semester 2, 2026'],
+        DEFAULT_LAST_UPDATE: 'Semester 1, 2026',
+    }
+});
 
-// Mock @heroui/react components to avoid complex framer-motion overlays and dynamic imports in Jest jsdom
-jest.mock('@heroui/react', () => {
-    const React = require('react');
-    return {
+mock.module('@heroui/react', {
+    exports: {
         Button: ({ children, onClick, onPress, className, as: Component = 'button', isLoading, startContent, radius, size, variant, isIconOnly, color, isDisabled, ...props }: any) => (
-            <Component 
-                onClick={onClick || onPress} 
-                className={className} 
-                disabled={isDisabled || isLoading} 
-                {...props}
-            >
-                {children}
-            </Component>
+            React.createElement(Component, {
+                onClick: onClick || onPress,
+                className,
+                disabled: isDisabled || isLoading,
+                ...props
+            }, children)
         ),
         Chip: ({ children, className, radius, size, variant, color, startContent, endContent, ...props }: any) => (
-            <div data-testid="mock-chip" className={className} {...props}>
-                {children}
-            </div>
+            React.createElement('div', { 'data-testid': 'mock-chip', className, ...props }, children)
         ),
         Card: ({ children, className, radius, shadow, isPressable, onPress, ...props }: any) => (
-            <div data-testid="mock-card" className={className} {...props}>
-                {children}
-            </div>
+            React.createElement('div', { 'data-testid': 'mock-card', className, ...props }, children)
         ),
         CardBody: ({ children, className, ...props }: any) => (
-            <div data-testid="mock-card-body" className={className} {...props}>
-                {children}
-            </div>
+            React.createElement('div', { 'data-testid': 'mock-card-body', className, ...props }, children)
         ),
         Textarea: ({ value, onValueChange, placeholder, className, radius, minRows, classNames, size, isInvalid, errorMessage, onChange, ...props }: any) => (
-            <textarea
-                value={value}
-                onChange={onChange || ((e: any) => onValueChange && onValueChange(e.target.value))}
-                placeholder={placeholder}
-                className={className}
-                {...props}
-            />
+            React.createElement('textarea', {
+                value,
+                onChange: onChange || ((e: any) => onValueChange && onValueChange(e.target.value)),
+                placeholder,
+                className,
+                ...props
+            })
         ),
-        Modal: ({ children, isOpen }: any) => isOpen ? <div data-testid="mock-modal">{children}</div> : null,
+        Input: ({ id, value, onValueChange, placeholder, isInvalid, errorMessage, classNames, radius, ...props }: any) => (
+            React.createElement('input', {
+                id,
+                type: 'text',
+                value,
+                onChange: (e: any) => onValueChange && onValueChange(e.target.value),
+                placeholder,
+                ...props
+            })
+        ),
+        Modal: ({ children, isOpen }: any) => isOpen ? React.createElement('div', { 'data-testid': 'mock-modal' }, children) : null,
         ModalContent: ({ children }: any) => {
-            return (
-                <div data-testid="mock-modal-content">
-                    {typeof children === 'function' ? children(() => {}) : children}
-                </div>
-            );
+            return React.createElement('div', { 'data-testid': 'mock-modal-content' }, typeof children === 'function' ? children(() => {}) : children);
         },
-        ModalHeader: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-        ModalBody: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-        ModalFooter: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+        ModalHeader: ({ children, ...props }: any) => React.createElement('div', props, children),
+        ModalBody: ({ children, ...props }: any) => React.createElement('div', props, children),
+        ModalFooter: ({ children, ...props }: any) => React.createElement('div', props, children),
         Select: ({ children, label, value, onChange, selectedKeys, onSelectionChange, classNames, popoverProps, listboxProps, radius, errorMessage, isInvalid, size, placeholder, ...props }: any) => {
             const val = selectedKeys ? Array.from(selectedKeys)[0] : value;
             const handleChange = (e: any) => {
                 if (onChange) onChange(e);
                 if (onSelectionChange) onSelectionChange(new Set([e.target.value]));
             };
-            return (
-                <div data-testid="mock-select" {...props}>
-                    <label>{label}</label>
-                    <select aria-label={label} value={val || ''} onChange={handleChange}>
-                        {React.Children.map(children, (child: any) => {
-                            if (!child) return null;
-                            const childKey = child.key || child.props?.value || child.props?.textValue;
-                            return (
-                                <option key={childKey} value={childKey}>
-                                    {child.props?.children || child.props?.textValue}
-                                </option>
-                            );
-                        })}
-                    </select>
-                </div>
+            return React.createElement('div', { 'data-testid': 'mock-select', ...props },
+                React.createElement('label', null, label),
+                React.createElement('select', { 'aria-label': label, value: val || '', onChange: handleChange },
+                    React.Children.map(children, (child: any) => {
+                        if (!child) return null;
+                        const childKey = child.key || child.props?.value || child.props?.textValue;
+                        return React.createElement('option', { key: childKey, value: childKey }, child.props?.children || child.props?.textValue);
+                    })
+                )
             );
         },
         SelectItem: ({ children, value, textValue, className, ...props }: any) => (
-            <option value={value} {...props}>
-                {children}
-            </option>
+            React.createElement('option', { value, ...props }, children)
+        ),
+        Checkbox: ({ children, isSelected, onValueChange, className, size, radius, ...props }: any) => (
+            React.createElement('label', null,
+                React.createElement('input', {
+                    type: 'checkbox',
+                    checked: isSelected,
+                    onChange: (e: any) => onValueChange && onValueChange(e.target.checked),
+                    ...props
+                }),
+                children
+            )
+        ),
+        Slider: ({ label, value, onChange, size, radius, step, maxValue, minValue, classNames, className, ...props }: any) => (
+            React.createElement('label', null,
+                React.createElement('span', null, label),
+                React.createElement('input', {
+                    type: 'range',
+                    value,
+                    min: minValue,
+                    max: maxValue,
+                    step,
+                    onChange: (e: any) => onChange && onChange(Number(e.target.value)),
+                    ...props
+                })
+            )
         ),
         useDisclosure: () => {
             const [isOpen, setIsOpen] = React.useState(false);
@@ -114,13 +134,20 @@ jest.mock('@heroui/react', () => {
                 onOpenChange: (val?: boolean) => setIsOpen((prev: boolean) => val !== undefined ? val : !prev),
             };
         },
-    };
+    }
 });
 
-// Mock the ReviewModal so we don't trigger its internal state hook dependencies
-jest.mock('../ReviewModal', () => ({
-    ReviewModal: () => <div data-testid="mock-review-modal" />,
-}));
+mock.module('../ReviewModal', {
+    exports: {
+        ReviewModal: () => React.createElement('div', { 'data-testid': 'mock-review-modal' }),
+    }
+});
+
+// Import dynamically after mocks are loaded
+const { useSession, signIn } = await import('next-auth/react');
+const { addComment, toggleLike, deleteReview, deleteComment, updateComment, updateReview } = await import('@/app/actions/reviews');
+const { voteOnCourseUpdate } = await import('@/app/actions/courseUpdates');
+const { CourseDetailClient } = await import('../CourseDetailClient');
 
 const mockCourse = {
     code: 'COMP SCI 1102',
@@ -180,18 +207,21 @@ const mockReviews = [
 
 describe('CourseDetailClient Component', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
-        (toggleLike as jest.Mock).mockResolvedValue(undefined);
-        (deleteReview as jest.Mock).mockResolvedValue(undefined);
-        (addComment as jest.Mock).mockResolvedValue(undefined);
-        (updateComment as jest.Mock).mockResolvedValue(undefined);
-        (deleteComment as jest.Mock).mockResolvedValue(undefined);
-        (updateReview as jest.Mock).mockResolvedValue(undefined);
-        (voteOnCourseUpdate as jest.Mock).mockResolvedValue({ success: true, voteData: mockUpdateVoteData });
+        (toggleLike as any).mock.mockImplementation(async () => {});
+        (deleteReview as any).mock.mockImplementation(async () => {});
+        (addComment as any).mock.mockImplementation(async () => {});
+        (updateComment as any).mock.mockImplementation(async () => {});
+        (deleteComment as any).mock.mockImplementation(async () => {});
+        (updateReview as any).mock.mockImplementation(async () => {});
+        (voteOnCourseUpdate as any).mock.mockImplementation(async () => ({ success: true, voteData: mockUpdateVoteData }));
+        
+        // Mock confirm
+        window.confirm = mock.fn(() => true);
+        global.confirm = window.confirm as any;
     });
 
     it('renders the course headers, statistics and enriched adelaide metadata successfully', () => {
-        (useSession as jest.Mock).mockReturnValue({ data: null, status: 'unauthenticated' });
+        (useSession as any).mock.mockImplementation(() => ({ data: null, status: 'unauthenticated' }));
 
         render(
             <CourseDetailClient
@@ -203,30 +233,30 @@ describe('CourseDetailClient Component', () => {
         );
 
         // Course info renders
-        expect(screen.getByText(/COMP SCI 1102/i)).toBeInTheDocument();
-        expect(screen.getByText(/Intro to Programming/i)).toBeInTheDocument();
-        expect(screen.getByText(/Learn programming fundamentals/i)).toBeInTheDocument();
+        assert.ok(screen.getByText(/COMP SCI 1102/i));
+        assert.ok(screen.getByText(/Intro to Programming/i));
+        assert.ok(screen.getByText(/Learn programming fundamentals/i));
 
         // Enriched metadata blocks render
-        expect(screen.getByText('Prerequisites')).toBeInTheDocument();
-        expect(screen.getByText('COMP SCI 1101')).toBeInTheDocument();
-        expect(screen.getByText('Corequisites')).toBeInTheDocument();
-        expect(screen.getByText('MATHS 1011')).toBeInTheDocument();
-        expect(screen.getByText('Antirequisites')).toBeInTheDocument();
-        expect(screen.getByText('COMP SCI 1103')).toBeInTheDocument();
-        expect(screen.getByText('Exam')).toBeInTheDocument();
-        expect(screen.getByText('Project')).toBeInTheDocument();
-        expect(screen.getByText('Learning Outcomes')).toBeInTheDocument();
-        expect(screen.getByText('Write basic programs')).toBeInTheDocument();
-        expect(screen.getByText('Textbooks & Resources')).toBeInTheDocument();
-        expect(screen.getByText('Programming in Python 3')).toBeInTheDocument();
+        assert.ok(screen.getByText('Prerequisites'));
+        assert.ok(screen.getByText('COMP SCI 1101'));
+        assert.ok(screen.getByText('Corequisites'));
+        assert.ok(screen.getByText('MATHS 1011'));
+        assert.ok(screen.getByText('Antirequisites'));
+        assert.ok(screen.getByText('COMP SCI 1103'));
+        assert.ok(screen.getByText('Exam'));
+        assert.ok(screen.getByText('Project'));
+        assert.ok(screen.getByText('Learning Outcomes'));
+        assert.ok(screen.getByText('Write basic programs'));
+        assert.ok(screen.getByText('Textbooks & Resources'));
+        assert.ok(screen.getByText('Programming in Python 3'));
         
         // Write Review button renders
-        expect(screen.getByRole('button', { name: /Write Review/i })).toBeInTheDocument();
+        assert.ok(screen.getByRole('button', { name: /Write Review/i }));
     });
 
     it('renders placeholder string when description is missing', () => {
-        (useSession as jest.Mock).mockReturnValue({ data: null, status: 'unauthenticated' });
+        (useSession as any).mock.mockImplementation(() => ({ data: null, status: 'unauthenticated' }));
         render(
             <CourseDetailClient
                 course={{ ...mockCourse, description: '' }}
@@ -235,12 +265,12 @@ describe('CourseDetailClient Component', () => {
                 updateVoteData={mockUpdateVoteData}
             />
         );
-        expect(screen.getByText(/No overview available/i)).toBeInTheDocument();
-        expect(screen.getByText(/No reviews yet/i)).toBeInTheDocument();
+        assert.ok(screen.getByText(/No overview available/i));
+        assert.ok(screen.getByText(/No reviews yet/i));
     });
 
     it('opens the AuthRequired warning modal when an unauthenticated user clicks Write Review', async () => {
-        (useSession as jest.Mock).mockReturnValue({ data: null, status: 'unauthenticated' });
+        (useSession as any).mock.mockImplementation(() => ({ data: null, status: 'unauthenticated' }));
 
         render(
             <CourseDetailClient
@@ -255,20 +285,21 @@ describe('CourseDetailClient Component', () => {
         fireEvent.click(writeButton);
 
         // Warning modal text should be visible
-        expect(screen.getByText('Authentication Required')).toBeInTheDocument();
-        expect(screen.getByText(/You need to be logged into your/i)).toBeInTheDocument();
+        assert.ok(screen.getByText('Authentication Required'));
+        assert.ok(screen.getByText(/You need to be logged into your/i));
 
         // Clicking the sign in option triggers NextAuth OIDC flow
         const loginBtn = screen.getByRole('button', { name: /Log In with Keycloak/i });
         fireEvent.click(loginBtn);
-        expect(signIn).toHaveBeenCalledWith('keycloak');
+        assert.strictEqual((signIn as any).mock.callCount(), 1);
+        assert.strictEqual((signIn as any).mock.calls[0].arguments[0], 'keycloak');
     });
 
     it('opens the review submission modal directly if user is logged in', () => {
-        (useSession as jest.Mock).mockReturnValue({
+        (useSession as any).mock.mockImplementation(() => ({
             data: { user: { id: 'usr-1', name: 'John Student', email: 'john@student.adelaide.edu.au', role: 'user' } },
             status: 'authenticated',
-        });
+        }));
 
         render(
             <CourseDetailClient
@@ -283,14 +314,14 @@ describe('CourseDetailClient Component', () => {
         fireEvent.click(writeButton);
 
         // Should NOT show warning modal
-        expect(screen.queryByText('Authentication Required')).not.toBeInTheDocument();
+        assert.strictEqual(screen.queryByText('Authentication Required'), null);
 
         // Review modal mock should be rendered
-        expect(screen.getByTestId('mock-review-modal')).toBeInTheDocument();
+        assert.ok(screen.getByTestId('mock-review-modal'));
     });
 
     it('allows sorting reviews feed', () => {
-        (useSession as jest.Mock).mockReturnValue({ data: null, status: 'unauthenticated' });
+        (useSession as any).mock.mockImplementation(() => ({ data: null, status: 'unauthenticated' }));
         render(
             <CourseDetailClient
                 course={mockCourse}
@@ -300,19 +331,19 @@ describe('CourseDetailClient Component', () => {
             />
         );
 
-        const selectEl = screen.getByRole('combobox', { name: 'Sort Feed' });
+        const selectEl = screen.getByRole('combobox', { name: 'Sort Feed' }) as HTMLSelectElement;
         fireEvent.change(selectEl, { target: { value: 'rating-desc' } });
-        expect(selectEl).toHaveValue('rating-desc');
+        assert.strictEqual(selectEl.value, 'rating-desc');
 
         fireEvent.change(selectEl, { target: { value: 'rating-asc' } });
-        expect(selectEl).toHaveValue('rating-asc');
+        assert.strictEqual(selectEl.value, 'rating-asc');
     });
 
     it('handles review actions when authenticated', async () => {
-        (useSession as jest.Mock).mockReturnValue({
+        (useSession as any).mock.mockImplementation(() => ({
             data: { user: { id: 'usr-1', name: 'John Student', role: 'user' } },
             status: 'authenticated',
-        });
+        }));
 
         render(
             <CourseDetailClient
@@ -327,23 +358,24 @@ describe('CourseDetailClient Component', () => {
         const likeBtn = screen.getByRole('button', { name: /Like/i });
         fireEvent.click(likeBtn);
         await waitFor(() => {
-            expect(toggleLike).toHaveBeenCalledWith('rev-1');
+            assert.strictEqual((toggleLike as any).mock.callCount(), 1);
+            assert.strictEqual((toggleLike as any).mock.calls[0].arguments[0], 'rev-1');
         });
 
         // Delete review callback triggered on card
-        window.confirm = jest.fn(() => true);
         const deleteBtn = screen.getByRole('button', { name: /Delete/i });
         fireEvent.click(deleteBtn);
         await waitFor(() => {
-            expect(deleteReview).toHaveBeenCalledWith('rev-1');
+            assert.strictEqual((deleteReview as any).mock.callCount(), 1);
+            assert.strictEqual((deleteReview as any).mock.calls[0].arguments[0], 'rev-1');
         });
     });
 
     it('handles comment submission when authenticated', async () => {
-        (useSession as jest.Mock).mockReturnValue({
+        (useSession as any).mock.mockImplementation(() => ({
             data: { user: { id: 'usr-1', name: 'John Student', role: 'user' } },
             status: 'authenticated',
-        });
+        }));
 
         render(
             <CourseDetailClient
@@ -366,15 +398,18 @@ describe('CourseDetailClient Component', () => {
         fireEvent.click(submitBtn);
 
         await waitFor(() => {
-            expect(addComment).toHaveBeenCalledWith('rev-1', 'This is my integration comment', undefined);
+            assert.strictEqual((addComment as any).mock.callCount(), 1);
+            assert.strictEqual((addComment as any).mock.calls[0].arguments[0], 'rev-1');
+            assert.strictEqual((addComment as any).mock.calls[0].arguments[1], 'This is my integration comment');
+            assert.strictEqual((addComment as any).mock.calls[0].arguments[2], undefined);
         });
     });
 
     it('handles consensus update voting triggers', async () => {
-        (useSession as jest.Mock).mockReturnValue({
+        (useSession as any).mock.mockImplementation(() => ({
             data: { user: { id: 'usr-1', name: 'John Student', role: 'user' } },
             status: 'authenticated',
-        });
+        }));
 
         render(
             <CourseDetailClient
@@ -389,7 +424,10 @@ describe('CourseDetailClient Component', () => {
         fireEvent.click(correctBtn);
 
         await waitFor(() => {
-            expect(voteOnCourseUpdate).toHaveBeenCalledWith('COMP SCI 1102', 'Semester 1, 2026', 'Semester 1, 2026');
+            assert.strictEqual((voteOnCourseUpdate as any).mock.callCount(), 1);
+            assert.strictEqual((voteOnCourseUpdate as any).mock.calls[0].arguments[0], 'COMP SCI 1102');
+            assert.strictEqual((voteOnCourseUpdate as any).mock.calls[0].arguments[1], 'Semester 1, 2026');
+            assert.strictEqual((voteOnCourseUpdate as any).mock.calls[0].arguments[2], 'Semester 1, 2026');
         });
     });
 });

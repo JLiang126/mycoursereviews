@@ -1,20 +1,27 @@
+import { describe, it, mock } from 'node:test';
+import assert from 'node:assert';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { CourseHeaderSection } from '../CourseHeaderSection';
 import { CourseData } from '@/lib/courses-api';
 
-jest.mock('@heroui/react', () => ({
-    Button: ({ children, as: Component = 'button', href, ...props }: any) => (
-        <Component href={href} {...props}>
-            {children}
-        </Component>
-    ),
-    Chip: ({ children, className, ...props }: any) => (
-        <div data-testid="mock-chip" className={className} {...props}>
-            {children}
-        </div>
-    ),
-}));
+// Mock @heroui/react before importing the component using modern Node 26 exports API
+mock.module('@heroui/react', {
+    exports: {
+        Button: ({ children, as: Component = 'button', href, ...props }: any) => (
+            <Component href={href} {...props}>
+                {children}
+            </Component>
+        ),
+        Chip: ({ children, className, ...props }: any) => (
+            <div data-testid="mock-chip" className={className} {...props}>
+                {children}
+            </div>
+        ),
+    }
+});
+
+// Dynamically import component after registering mocks
+const { CourseHeaderSection } = await import('../CourseHeaderSection');
 
 const mockCourse: CourseData = {
     code: 'COMP SCI 1102',
@@ -33,20 +40,20 @@ describe('CourseHeaderSection Component', () => {
     it('renders basic course info successfully', () => {
         render(<CourseHeaderSection course={mockCourse} />);
 
-        expect(screen.getByText('COMP SCI 1102')).toBeInTheDocument();
-        expect(screen.getByText('Object Oriented Programming')).toBeInTheDocument();
-        expect(screen.getByText('Semester 1')).toBeInTheDocument();
-        expect(screen.getByText('Semester 2')).toBeInTheDocument();
+        assert.ok(screen.getByText('COMP SCI 1102'));
+        assert.ok(screen.getByText('Object Oriented Programming'));
+        assert.ok(screen.getByText('Semester 1'));
+        assert.ok(screen.getByText('Semester 2'));
     });
 
     it('renders full metadata pills successfully', () => {
         render(<CourseHeaderSection course={mockCourse} />);
 
-        expect(screen.getByText(/COORDINATOR: Dr. John Doe/i)).toBeInTheDocument();
-        expect(screen.getByText(/CAMPUS: North Terrace/i)).toBeInTheDocument();
-        expect(screen.getByText(/UNITS: 3/i)).toBeInTheDocument();
-        expect(screen.getByText(/LEVEL: Undergraduate/i)).toBeInTheDocument();
-        expect(screen.getByText(/ELECTIVE: YES/i)).toBeInTheDocument();
+        assert.ok(screen.getByText(/COORDINATOR: Dr. John Doe/i));
+        assert.ok(screen.getByText(/CAMPUS: North Terrace/i));
+        assert.ok(screen.getByText(/UNITS: 3/i));
+        assert.ok(screen.getByText(/LEVEL: Undergraduate/i));
+        assert.ok(screen.getByText(/ELECTIVE: YES/i));
     });
 
     it('renders no longer offered warnings when appropriate', () => {
@@ -57,7 +64,7 @@ describe('CourseHeaderSection Component', () => {
         };
         render(<CourseHeaderSection course={inactiveCourse} />);
 
-        expect(screen.getByText('Course No Longer Offered')).toBeInTheDocument();
-        expect(screen.getByText(/This course is no longer offered by Adelaide University/i)).toBeInTheDocument();
+        assert.ok(screen.getByText('Course No Longer Offered'));
+        assert.ok(screen.getByText(/This course is no longer offered by Adelaide University/i));
     });
 });

@@ -1,49 +1,60 @@
+import { describe, it, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { ReviewFeedCard, Review } from '../ReviewFeedCard';
+import React from 'react';
+import { Review } from '../ReviewFeedCard';
 
-// Mock framer-motion to render clean elements without webgl/transform animation wrappers in jsdom
-jest.mock('framer-motion', () => ({
-    motion: {
-        div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    },
-}));
+// Mock framer-motion before importing using modern Node 26 exports API
+mock.module('framer-motion', {
+    exports: {
+        motion: {
+            div: ({ children, ...props }: any) => React.createElement('div', props, children),
+        },
+    }
+});
 
 // Mock heroui components to swallow custom styling props and prevent console warnings
-jest.mock('@heroui/react', () => ({
-    Button: ({ children, onClick, onPress, isLoading, radius, size, variant, color, startContent, ...props }: any) => (
-        <button onClick={onClick || onPress} disabled={isLoading} {...props}>
-            {children}
-        </button>
-    ),
-    Card: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    CardBody: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    Textarea: ({ value, onValueChange, placeholder, radius, size, classNames, minRows, isDisabled, ...props }: any) => (
-        <textarea
-            value={value}
-            onChange={(e) => onValueChange && onValueChange(e.target.value)}
-            placeholder={placeholder}
-            disabled={isDisabled}
-            {...props}
-        />
-    ),
-}));
+mock.module('@heroui/react', {
+    exports: {
+        Button: ({ children, onClick, onPress, isLoading, radius, size, variant, color, startContent, ...props }: any) => (
+            React.createElement('button', { onClick: onClick || onPress, disabled: isLoading, ...props }, children)
+        ),
+        Card: ({ children, ...props }: any) => React.createElement('div', props, children),
+        CardBody: ({ children, ...props }: any) => React.createElement('div', props, children),
+        Textarea: ({ value, onValueChange, placeholder, radius, size, classNames, minRows, isDisabled, ...props }: any) => (
+            React.createElement('textarea', {
+                value,
+                onChange: (e: any) => onValueChange && onValueChange(e.target.value),
+                placeholder,
+                disabled: isDisabled,
+                ...props
+            })
+        ),
+    }
+});
 
-jest.mock('../ModerationWarningModal', () => ({
-    ModerationWarningModal: ({ isOpen, onClose, message }: any) => (
-        isOpen ? (
-            <div data-testid="moderation-warning-modal">
-                <span data-testid="moderation-warning-message">{message}</span>
-                <button onClick={onClose} data-testid="close-warning-btn">Close Warning</button>
-            </div>
-        ) : null
-    )
-}));
+mock.module('../ModerationWarningModal', {
+    exports: {
+        ModerationWarningModal: ({ isOpen, onClose, message }: any) => (
+            isOpen ? (
+                React.createElement('div', { 'data-testid': 'moderation-warning-modal' },
+                    React.createElement('span', { 'data-testid': 'moderation-warning-message' }, message),
+                    React.createElement('button', { onClick: onClose, 'data-testid': 'close-warning-btn' }, 'Close Warning')
+                )
+            ) : null
+        )
+    }
+});
 
 // Mock CommentThread component
-jest.mock('../CommentThread', () => ({
-    CommentThread: ({ reviewId }: any) => <div data-testid="mock-comment-thread">{reviewId}</div>,
-}));
+mock.module('../CommentThread', {
+    exports: {
+        CommentThread: ({ reviewId }: any) => React.createElement('div', { 'data-testid': 'mock-comment-thread' }, reviewId),
+    }
+});
+
+// Dynamically import component after registering mocks
+const { ReviewFeedCard } = await import('../ReviewFeedCard');
 
 const mockReview: Review = {
     id: 'rev123',
@@ -74,27 +85,44 @@ const mockReview: Review = {
 };
 
 describe('ReviewFeedCard Component', () => {
-    let mockOnLike: jest.Mock;
-    let mockOnReviewEdit: jest.Mock;
-    let mockOnReviewDelete: jest.Mock;
-    let mockOnCommentSubmit: jest.Mock;
-    let mockOnCommentEdit: jest.Mock;
-    let mockOnCommentDelete: jest.Mock;
-    let originalAlert: any;
+    let mockOnLike: any;
+    let mockOnReviewEdit: any;
+    let mockOnReviewDelete: any;
+    let mockOnCommentSubmit: any;
+    let mockOnCommentEdit: any;
+    let mockOnCommentDelete: any;
+    let originalConfirm: any;
+    let mockAlert: any;
 
     beforeEach(() => {
-        mockOnLike = jest.fn().mockResolvedValue(undefined);
-        mockOnReviewEdit = jest.fn();
-        mockOnReviewDelete = jest.fn().mockResolvedValue(undefined);
-        mockOnCommentSubmit = jest.fn().mockResolvedValue(undefined);
-        mockOnCommentEdit = jest.fn().mockResolvedValue(undefined);
-        mockOnCommentDelete = jest.fn().mockResolvedValue(undefined);
-        originalAlert = window.alert;
-        window.alert = jest.fn();
+        mockOnLike = mock.fn(async () => {});
+        mockOnReviewEdit = mock.fn();
+        mockOnReviewDelete = mock.fn(async () => {});
+        mockOnCommentSubmit = mock.fn(async () => {});
+        mockOnCommentEdit = mock.fn(async () => {});
+        mockOnCommentDelete = mock.fn(async () => {});
+        
+        mockAlert = mock.fn();
+        Object.defineProperty(window, 'alert', {
+            value: mockAlert,
+            configurable: true,
+            writable: true
+        });
+        Object.defineProperty(global, 'alert', {
+            value: mockAlert,
+            configurable: true,
+            writable: true
+        });
+        
+        originalConfirm = window.confirm;
+        const mockConfirm = mock.fn(() => true);
+        window.confirm = mockConfirm;
+        global.confirm = mockConfirm;
     });
 
     afterEach(() => {
-        window.alert = originalAlert;
+        window.confirm = originalConfirm;
+        global.confirm = originalConfirm;
     });
 
     it('renders review details successfully', () => {
@@ -112,11 +140,11 @@ describe('ReviewFeedCard Component', () => {
             />
         );
 
-        expect(screen.getByText('Highly Recommended Course')).toBeInTheDocument();
-        expect(screen.getByText('John Doe')).toBeInTheDocument();
-        expect(screen.getByText('Grade: HD')).toBeInTheDocument();
-        expect(screen.getByText('Term taken: Semester 1, 2026')).toBeInTheDocument();
-        expect(screen.getByText('Comments (1)')).toBeInTheDocument();
+        assert.ok(screen.getByText('Highly Recommended Course'));
+        assert.ok(screen.getByText('John Doe'));
+        assert.ok(screen.getByText('Grade: HD'));
+        assert.ok(screen.getByText('Term taken: Semester 1, 2026'));
+        assert.ok(screen.getByText('Comments (1)'));
     });
 
     it('renders anonymous reviewer correctly', () => {
@@ -134,8 +162,8 @@ describe('ReviewFeedCard Component', () => {
             />
         );
 
-        expect(screen.getByText('Anonymous')).toBeInTheDocument();
-        expect(screen.queryByText('John Doe')).not.toBeInTheDocument();
+        assert.ok(screen.getByText('Anonymous'));
+        assert.strictEqual(screen.queryByText('John Doe'), null);
     });
 
     it('allows toggling description truncation/expansion', () => {
@@ -155,10 +183,10 @@ describe('ReviewFeedCard Component', () => {
 
         const toggleBtn = screen.getByRole('button', { name: 'See More' });
         fireEvent.click(toggleBtn);
-        expect(screen.getByRole('button', { name: 'See Less' })).toBeInTheDocument();
+        assert.ok(screen.getByRole('button', { name: 'See Less' }));
 
         fireEvent.click(screen.getByRole('button', { name: 'See Less' }));
-        expect(screen.getByRole('button', { name: 'See More' })).toBeInTheDocument();
+        assert.ok(screen.getByRole('button', { name: 'See More' }));
     });
 
     it('alerts unauthenticated user trying to like', () => {
@@ -179,8 +207,9 @@ describe('ReviewFeedCard Component', () => {
         const likeBtn = screen.getByRole('button', { name: /Like/i });
         fireEvent.click(likeBtn);
 
-        expect(window.alert).toHaveBeenCalledWith('Please login to like reviews.');
-        expect(mockOnLike).not.toHaveBeenCalled();
+        assert.strictEqual(mockAlert.mock.callCount(), 1);
+        assert.strictEqual(mockAlert.mock.calls[0].arguments[0], 'Please login to like reviews.');
+        assert.strictEqual(mockOnLike.mock.callCount(), 0);
     });
 
     it('calls onLike when authenticated user likes', async () => {
@@ -202,12 +231,16 @@ describe('ReviewFeedCard Component', () => {
         fireEvent.click(likeBtn);
 
         await waitFor(() => {
-            expect(mockOnLike).toHaveBeenCalledWith('rev123');
+            assert.strictEqual(mockOnLike.mock.callCount(), 1);
+            assert.strictEqual(mockOnLike.mock.calls[0].arguments[0], 'rev123');
         });
     });
 
     it('handles like errors cleanly', async () => {
-        mockOnLike.mockRejectedValue(new Error('Network failure'));
+        mockOnLike = mock.fn(async () => {
+            throw new Error('Network failure');
+        });
+
         render(
             <ReviewFeedCard
                 review={mockReview}
@@ -226,7 +259,8 @@ describe('ReviewFeedCard Component', () => {
         fireEvent.click(likeBtn);
 
         await waitFor(() => {
-            expect(window.alert).toHaveBeenCalledWith('Network failure');
+            assert.strictEqual(mockAlert.mock.callCount(), 1);
+            assert.strictEqual(mockAlert.mock.calls[0].arguments[0], 'Network failure');
         });
     });
 
@@ -247,11 +281,11 @@ describe('ReviewFeedCard Component', () => {
 
         const editBtn = screen.getByRole('button', { name: /edit/i });
         fireEvent.click(editBtn);
-        expect(mockOnReviewEdit).toHaveBeenCalledWith(mockReview);
+        assert.strictEqual(mockOnReviewEdit.mock.callCount(), 1);
+        assert.deepStrictEqual(mockOnReviewEdit.mock.calls[0].arguments[0], mockReview);
     });
 
     it('allows deletion of review with confirmation', async () => {
-        window.confirm = jest.fn(() => true);
         render(
             <ReviewFeedCard
                 review={mockReview}
@@ -269,14 +303,17 @@ describe('ReviewFeedCard Component', () => {
         const deleteBtn = screen.getByRole('button', { name: /delete/i });
         fireEvent.click(deleteBtn);
 
-        expect(window.confirm).toHaveBeenCalled();
+        assert.strictEqual((window.confirm as any).mock.callCount(), 1);
         await waitFor(() => {
-            expect(mockOnReviewDelete).toHaveBeenCalledWith('rev123');
+            assert.strictEqual(mockOnReviewDelete.mock.callCount(), 1);
+            assert.strictEqual(mockOnReviewDelete.mock.calls[0].arguments[0], 'rev123');
         });
     });
 
     it('aborts deletion if cancel confirmation selected', () => {
-        window.confirm = jest.fn(() => false);
+        window.confirm = mock.fn(() => false);
+        global.confirm = window.confirm as any;
+
         render(
             <ReviewFeedCard
                 review={mockReview}
@@ -294,8 +331,8 @@ describe('ReviewFeedCard Component', () => {
         const deleteBtn = screen.getByRole('button', { name: /delete/i });
         fireEvent.click(deleteBtn);
 
-        expect(window.confirm).toHaveBeenCalled();
-        expect(mockOnReviewDelete).not.toHaveBeenCalled();
+        assert.strictEqual((window.confirm as any).mock.callCount(), 1);
+        assert.strictEqual(mockOnReviewDelete.mock.callCount(), 0);
     });
 
     it('renders empty comments placeholder', () => {
@@ -313,7 +350,7 @@ describe('ReviewFeedCard Component', () => {
             />
         );
 
-        expect(screen.getByText('No comments yet.')).toBeInTheDocument();
+        assert.ok(screen.getByText('No comments yet.'));
     });
 
     it('allows authenticated comment writing', async () => {
@@ -342,7 +379,9 @@ describe('ReviewFeedCard Component', () => {
         fireEvent.click(submitBtn);
 
         await waitFor(() => {
-            expect(mockOnCommentSubmit).toHaveBeenCalledWith('rev123', 'This is my root comment');
+            assert.strictEqual(mockOnCommentSubmit.mock.callCount(), 1);
+            assert.strictEqual(mockOnCommentSubmit.mock.calls[0].arguments[0], 'rev123');
+            assert.strictEqual(mockOnCommentSubmit.mock.calls[0].arguments[1], 'This is my root comment');
         });
     });
 
@@ -367,14 +406,16 @@ describe('ReviewFeedCard Component', () => {
         const submitBtn = screen.getByRole('button', { name: 'Add a Comment' });
         fireEvent.click(submitBtn);
 
-        expect(screen.getByTestId('moderation-warning-modal')).toBeInTheDocument();
-        expect(screen.getByTestId('moderation-warning-message')).toHaveTextContent('Comment cannot be empty.');
-        expect(mockOnCommentSubmit).not.toHaveBeenCalled();
+        assert.ok(screen.getByTestId('moderation-warning-modal'));
+        assert.ok(screen.getByTestId('moderation-warning-message').textContent?.includes('Comment cannot be empty.'));
+        assert.strictEqual(mockOnCommentSubmit.mock.callCount(), 0);
     });
 
     it('alerts on review deletion failure', async () => {
-        window.confirm = jest.fn(() => true);
-        mockOnReviewDelete.mockRejectedValue(new Error('Deletion failed'));
+        mockOnReviewDelete = mock.fn(async () => {
+            throw new Error('Deletion failed');
+        });
+
         render(
             <ReviewFeedCard
                 review={mockReview}
@@ -393,12 +434,16 @@ describe('ReviewFeedCard Component', () => {
         fireEvent.click(deleteBtn);
 
         await waitFor(() => {
-            expect(window.alert).toHaveBeenCalledWith('Deletion failed');
+            assert.strictEqual(mockAlert.mock.callCount(), 1);
+            assert.strictEqual(mockAlert.mock.calls[0].arguments[0], 'Deletion failed');
         });
     });
 
     it('alerts on comment submission failure', async () => {
-        mockOnCommentSubmit.mockRejectedValue(new Error('Comment submission failed'));
+        mockOnCommentSubmit = mock.fn(async () => {
+            throw new Error('Comment submission failed');
+        });
+
         render(
             <ReviewFeedCard
                 review={mockReview}
@@ -423,8 +468,8 @@ describe('ReviewFeedCard Component', () => {
         fireEvent.click(submitBtn);
 
         await waitFor(() => {
-            expect(screen.getByTestId('moderation-warning-modal')).toBeInTheDocument();
-            expect(screen.getByTestId('moderation-warning-message')).toHaveTextContent('Comment submission failed');
+            assert.ok(screen.getByTestId('moderation-warning-modal'));
+            assert.ok(screen.getByTestId('moderation-warning-message').textContent?.includes('Comment submission failed'));
         });
     });
 });

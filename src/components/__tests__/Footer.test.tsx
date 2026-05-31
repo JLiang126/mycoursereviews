@@ -1,19 +1,21 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
 
-import { Footer } from '../Footer';
+// Dynamically import after bootstrap mocks are initialized
+const { Footer } = await import('../Footer');
 
 describe('Footer Component', () => {
     it('renders the branding text and copyrights successfully', () => {
         render(<Footer />);
 
         // Assert branding presence
-        expect(screen.getByText(/MyCourse/)).toBeInTheDocument();
-        expect(screen.getByText(/Reviews/)).toBeInTheDocument();
+        assert.ok(screen.getByText(/MyCourse/));
+        assert.ok(screen.getByText(/Reviews/));
 
         // Assert copyright reference
-        expect(screen.getByText(/Adelaide University Computer Science Club/)).toBeInTheDocument();
+        assert.ok(screen.getByText(/Adelaide University Computer Science Club/));
     });
 
     it('contains interactive modal toggle triggers for About, Disclaimer, and Privacy', () => {
@@ -23,8 +25,8 @@ describe('Footer Component', () => {
         const disclaimerTrigger = screen.getByText('Disclaimer');
         const privacyTrigger = screen.getByText('Privacy');
 
-        expect(aboutTrigger).toBeInTheDocument();
-        expect(disclaimerTrigger).toBeInTheDocument();
-        expect(privacyTrigger).toBeInTheDocument();
+        assert.ok(aboutTrigger);
+        assert.ok(disclaimerTrigger);
+        assert.ok(privacyTrigger);
     });
 });

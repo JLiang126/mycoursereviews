@@ -1,35 +1,42 @@
+import { describe, it, beforeEach, mock } from 'node:test';
+import assert from 'node:assert';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { CommentThread, Comment } from '../CommentThread';
+import React from 'react';
+import { Comment } from '../Comment';
 
-// Mock heroui components to be simple HTML blocks
-jest.mock('@heroui/react', () => ({
-    Button: ({ children, onClick, onPress, isLoading, radius, size, variant, isIconOnly, startContent, ...props }: any) => (
-        <button onClick={onClick || onPress} disabled={isLoading} {...props}>
-            {children}
-        </button>
-    ),
-    Textarea: ({ value, onValueChange, placeholder, radius, minRows, classNames, size, isDisabled, ...props }: any) => (
-        <textarea
-            value={value}
-            onChange={(e) => onValueChange && onValueChange(e.target.value)}
-            placeholder={placeholder}
-            disabled={isDisabled}
-            {...props}
-        />
-    ),
-}));
+// Mock @heroui/react before importing using modern Node 26 exports API
+mock.module('@heroui/react', {
+    exports: {
+        Button: ({ children, onClick, onPress, isLoading, radius, size, variant, isIconOnly, startContent, ...props }: any) => (
+            React.createElement('button', { onClick: onClick || onPress, disabled: isLoading, ...props }, children)
+        ),
+        Textarea: ({ value, onValueChange, placeholder, radius, minRows, classNames, size, isDisabled, ...props }: any) => (
+            React.createElement('textarea', {
+                value,
+                onChange: (e: any) => onValueChange && onValueChange(e.target.value),
+                placeholder,
+                disabled: isDisabled,
+                ...props
+            })
+        ),
+    }
+});
 
-jest.mock('../ModerationWarningModal', () => ({
-    ModerationWarningModal: ({ isOpen, onClose, message }: any) => (
-        isOpen ? (
-            <div data-testid="moderation-warning-modal">
-                <span data-testid="moderation-warning-message">{message}</span>
-                <button onClick={onClose} data-testid="close-warning-btn">Close Warning</button>
-            </div>
-        ) : null
-    )
-}));
+mock.module('../ModerationWarningModal', {
+    exports: {
+        ModerationWarningModal: ({ isOpen, onClose, message }: any) => (
+            isOpen ? (
+                React.createElement('div', { 'data-testid': 'moderation-warning-modal' },
+                    React.createElement('span', { 'data-testid': 'moderation-warning-message' }, message),
+                    React.createElement('button', { onClick: onClose, 'data-testid': 'close-warning-btn' }, 'Close Warning')
+                )
+            ) : null
+        )
+    }
+});
+
+// Dynamically import component after registering mocks
+const { CommentThread } = await import('../CommentThread');
 
 const mockComments: Comment[] = [
     {
@@ -51,14 +58,19 @@ const mockComments: Comment[] = [
 ];
 
 describe('CommentThread Component', () => {
-    let mockOnCommentSubmit: jest.Mock;
-    let mockOnCommentEdit: jest.Mock;
-    let mockOnCommentDelete: jest.Mock;
+    let mockOnCommentSubmit: any;
+    let mockOnCommentEdit: any;
+    let mockOnCommentDelete: any;
+    let mockConfirm: any;
 
     beforeEach(() => {
-        mockOnCommentSubmit = jest.fn().mockResolvedValue(undefined);
-        mockOnCommentEdit = jest.fn().mockResolvedValue(undefined);
-        mockOnCommentDelete = jest.fn().mockResolvedValue(undefined);
+        mockOnCommentSubmit = mock.fn(async () => {});
+        mockOnCommentEdit = mock.fn(async () => {});
+        mockOnCommentDelete = mock.fn(async () => {});
+
+        mockConfirm = mock.fn(() => true);
+        window.confirm = mockConfirm;
+        global.confirm = mockConfirm;
     });
 
     it('renders comments and nested threads successfully', () => {
@@ -73,10 +85,10 @@ describe('CommentThread Component', () => {
             />
         );
 
-        expect(screen.getByText('This is the main comment')).toBeInTheDocument();
-        expect(screen.getByText('This is a nested reply')).toBeInTheDocument();
-        expect(screen.getByText('Alice')).toBeInTheDocument();
-        expect(screen.getByText('Bob')).toBeInTheDocument();
+        assert.ok(screen.getByText('This is the main comment'));
+        assert.ok(screen.getByText('This is a nested reply'));
+        assert.ok(screen.getByText('Alice'));
+        assert.ok(screen.getByText('Bob'));
     });
 
     it('allows users to click reply and submit a nested comment', async () => {
@@ -102,7 +114,11 @@ describe('CommentThread Component', () => {
         fireEvent.click(submitButton);
 
         await waitFor(() => {
-            expect(mockOnCommentSubmit).toHaveBeenCalledWith('rev1', 'This is my reply text', 'c1');
+            assert.strictEqual(mockOnCommentSubmit.mock.callCount(), 1);
+            const args = mockOnCommentSubmit.mock.calls[0].arguments;
+            assert.strictEqual(args[0], 'rev1');
+            assert.strictEqual(args[1], 'This is my reply text');
+            assert.strictEqual(args[2], 'c1');
         });
     });
 
@@ -129,13 +145,14 @@ describe('CommentThread Component', () => {
         fireEvent.click(saveBtn);
 
         await waitFor(() => {
-            expect(mockOnCommentEdit).toHaveBeenCalledWith('c1', 'Updated comment text');
+            assert.strictEqual(mockOnCommentEdit.mock.callCount(), 1);
+            const args = mockOnCommentEdit.mock.calls[0].arguments;
+            assert.strictEqual(args[0], 'c1');
+            assert.strictEqual(args[1], 'Updated comment text');
         });
     });
 
     it('allows author or admin to delete a comment', async () => {
-        window.confirm = jest.fn(() => true);
-
         render(
             <CommentThread
                 reviewId="rev1"
@@ -150,14 +167,18 @@ describe('CommentThread Component', () => {
         const deleteBtn = screen.getByRole('button', { name: 'Delete Comment' });
         fireEvent.click(deleteBtn);
 
-        expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to delete this comment?');
+        assert.strictEqual(mockConfirm.mock.callCount(), 1);
+        assert.strictEqual(mockConfirm.mock.calls[0].arguments[0], 'Are you sure you want to delete this comment?');
         await waitFor(() => {
-            expect(mockOnCommentDelete).toHaveBeenCalledWith('c1');
+            assert.strictEqual(mockOnCommentDelete.mock.callCount(), 1);
+            assert.strictEqual(mockOnCommentDelete.mock.calls[0].arguments[0], 'c1');
         });
     });
 
     it('alerts on reply submission error', async () => {
-        mockOnCommentSubmit.mockRejectedValue(new Error('Submit reply failed'));
+        mockOnCommentSubmit = mock.fn(async () => {
+            throw new Error('Submit reply failed');
+        });
 
         render(
             <CommentThread
@@ -180,13 +201,15 @@ describe('CommentThread Component', () => {
         fireEvent.click(submitButton);
 
         await waitFor(() => {
-            expect(screen.getByTestId('moderation-warning-modal')).toBeInTheDocument();
-            expect(screen.getByTestId('moderation-warning-message')).toHaveTextContent('Submit reply failed');
+            assert.ok(screen.getByTestId('moderation-warning-modal'));
+            assert.ok(screen.getByTestId('moderation-warning-message').textContent?.includes('Submit reply failed'));
         });
     });
 
     it('alerts on edit submission error', async () => {
-        mockOnCommentEdit.mockRejectedValue(new Error('Edit comment failed'));
+        mockOnCommentEdit = mock.fn(async () => {
+            throw new Error('Edit comment failed');
+        });
 
         render(
             <CommentThread
@@ -209,14 +232,15 @@ describe('CommentThread Component', () => {
         fireEvent.click(saveBtn);
 
         await waitFor(() => {
-            expect(screen.getByTestId('moderation-warning-modal')).toBeInTheDocument();
-            expect(screen.getByTestId('moderation-warning-message')).toHaveTextContent('Edit comment failed');
+            assert.ok(screen.getByTestId('moderation-warning-modal'));
+            assert.ok(screen.getByTestId('moderation-warning-message').textContent?.includes('Edit comment failed'));
         });
     });
 
     it('alerts on delete comment error', async () => {
-        window.confirm = jest.fn(() => true);
-        mockOnCommentDelete.mockRejectedValue(new Error('Delete comment failed'));
+        mockOnCommentDelete = mock.fn(async () => {
+            throw new Error('Delete comment failed');
+        });
 
         render(
             <CommentThread
@@ -233,8 +257,8 @@ describe('CommentThread Component', () => {
         fireEvent.click(deleteBtn);
 
         await waitFor(() => {
-            expect(screen.getByTestId('moderation-warning-modal')).toBeInTheDocument();
-            expect(screen.getByTestId('moderation-warning-message')).toHaveTextContent('Delete comment failed');
+            assert.ok(screen.getByTestId('moderation-warning-modal'));
+            assert.ok(screen.getByTestId('moderation-warning-message').textContent?.includes('Delete comment failed'));
         });
     });
 });

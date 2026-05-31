@@ -7,7 +7,7 @@ permissions:
 
 jobs:
   test:
-    timeout-minutes: 60
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: "file:dev.sqlite"
@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: lts/*
       - name: Install dependencies
-        run: npm install -g pnpm@10 && pnpm install
+        run: npm install -g pnpm@11 && pnpm install
 
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps

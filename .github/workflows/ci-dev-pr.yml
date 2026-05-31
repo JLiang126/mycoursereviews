@@ -11,15 +11,15 @@ jobs:
   lint:
     name: Linting Checks
     uses: ./.github/workflows/lint.yml
-  jest:
-    name: Jest Tests
-    uses: ./.github/workflows/jest.yml
+  unit-test:
+    name: Unit Tests
+    uses: ./.github/workflows/unit-test.yml
   playwright:
     name: Playwright Tests
     uses: ./.github/workflows/playwright.yml
 
   build:
-    needs: [lint, jest, playwright]
+    needs: [lint, unit-test, playwright]
     name: Build
     runs-on: ubuntu-latest
     environment: Development

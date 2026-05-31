@@ -1,79 +1,81 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
 import { checkTextForProfanity } from '../profanity';
 
 describe('Profanity Moderation Checker', () => {
     it('returns containsProfanity: false for clean text', () => {
         const cleanText = "This is an absolutely fantastic and highly useful course. The lecturers were amazing.";
         const result = checkTextForProfanity(cleanText);
-        expect(result.containsProfanity).toBe(false);
+        assert.strictEqual(result.containsProfanity, false);
     });
 
     it('returns containsProfanity: false for empty or undefined text', () => {
-        expect(checkTextForProfanity('').containsProfanity).toBe(false);
-        expect(checkTextForProfanity(undefined as any).containsProfanity).toBe(false);
+        assert.strictEqual(checkTextForProfanity('').containsProfanity, false);
+        assert.strictEqual(checkTextForProfanity(undefined as any).containsProfanity, false);
     });
 
     it('returns containsProfanity: true and the custom error message for direct profanity', () => {
         const badText = "This course was absolute shit and the assignment was rubbish.";
         const result = checkTextForProfanity(badText);
-        expect(result.containsProfanity).toBe(true);
-        expect(result.errorMsg).toBe("Profanity or bad sentiment detected. Please write a meaningful, constructive response.");
+        assert.strictEqual(result.containsProfanity, true);
+        assert.strictEqual(result.errorMsg, "Profanity or bad sentiment detected. Please write a meaningful, constructive response.");
     });
 
     describe('Unicode Normalization & Homoglyph Evasions', () => {
         it('flags unicode lookalike variations of bad words', () => {
             const diacritics = "Don't take this course, it's a piece of füçk.";
-            expect(checkTextForProfanity(diacritics).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(diacritics).containsProfanity, true);
 
             const cyrillicLookalikes = "The assignments in this class are absolute ѕhіt."; // Uses Cyrillic 'ѕ' and 'і'
-            expect(checkTextForProfanity(cyrillicLookalikes).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(cyrillicLookalikes).containsProfanity, true);
 
             const greekUpsilon = "This exam is fυcked up."; // Uses Greek 'υ'
-            expect(checkTextForProfanity(greekUpsilon).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(greekUpsilon).containsProfanity, true);
         });
     });
 
     describe('Leetspeak Detection & Obfuscation Evasions', () => {
         it('flags classic leetspeak character substitutions', () => {
             const badLeetspeak = "Don't take this class, the exams are f4cked up.";
-            expect(checkTextForProfanity(badLeetspeak).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(badLeetspeak).containsProfanity, true);
 
             const sh1tEvasion = "This course is total sh1t.";
-            expect(checkTextForProfanity(sh1tEvasion).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(sh1tEvasion).containsProfanity, true);
 
             const assEvasion = "The coordinator is an @ss.";
-            expect(checkTextForProfanity(assEvasion).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(assEvasion).containsProfanity, true);
 
             const bitchEvasion = "This assignment is a b1tch.";
-            expect(checkTextForProfanity(bitchEvasion).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(bitchEvasion).containsProfanity, true);
         });
 
         it('flags spacing and repetition obfuscations', () => {
             const spacesText = "This class is absolute f u c k.";
-            expect(checkTextForProfanity(spacesText).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(spacesText).containsProfanity, true);
 
             const repetitionText = "This exam was fuuuuuck.";
-            expect(checkTextForProfanity(repetitionText).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(repetitionText).containsProfanity, true);
         });
     });
 
     describe('ML-like Toxicity, Personal Attacks & Bad Sentiment', () => {
         it('flags personal attacks against lecturers/coordinators', () => {
             const personalAttack = "The lecturer is an idiot and incredibly stupid.";
-            expect(checkTextForProfanity(personalAttack).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(personalAttack).containsProfanity, true);
 
             const dumbCoordinator = "The coordinator is so dumb and useless.";
-            expect(checkTextForProfanity(dumbCoordinator).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(dumbCoordinator).containsProfanity, true);
         });
 
         it('flags toxic student comments and harmful sentiments', () => {
             const toxicSentiment = "This course is absolute trash and garbage.";
-            expect(checkTextForProfanity(toxicSentiment).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(toxicSentiment).containsProfanity, true);
 
             const extremeHarm = "If you take this class you should kill yourself.";
-            expect(checkTextForProfanity(extremeHarm).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(extremeHarm).containsProfanity, true);
 
             const kysAttack = "The staff are terrible, kys.";
-            expect(checkTextForProfanity(kysAttack).containsProfanity).toBe(true);
+            assert.strictEqual(checkTextForProfanity(kysAttack).containsProfanity, true);
         });
     });
 });

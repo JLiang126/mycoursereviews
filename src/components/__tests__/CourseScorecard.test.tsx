@@ -1,5 +1,7 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import { CourseScorecard } from '../CourseScorecard';
 
 describe('CourseScorecard Component', () => {
@@ -15,8 +17,8 @@ describe('CourseScorecard Component', () => {
         render(<CourseScorecard stats={stats} />);
 
         // Verify N/A output for overall score and metrics
-        expect(screen.getAllByText('N/A')).toHaveLength(4);
-        expect(screen.getByText('Based on 0 reviews')).toBeInTheDocument();
+        assert.strictEqual(screen.getAllByText('N/A').length, 4);
+        assert.ok(screen.getByText('Based on 0 reviews'));
     });
 
     it('renders correct singular review text', () => {
@@ -29,7 +31,7 @@ describe('CourseScorecard Component', () => {
         };
 
         render(<CourseScorecard stats={stats} />);
-        expect(screen.getByText('Based on 1 review')).toBeInTheDocument();
+        assert.ok(screen.getByText('Based on 1 review'));
     });
 
     it('renders high difficulty (red state) metrics correctly', () => {
@@ -43,13 +45,13 @@ describe('CourseScorecard Component', () => {
 
         const { container } = render(<CourseScorecard stats={stats} />);
 
-        expect(screen.getByText('4.5')).toBeInTheDocument();
-        expect(screen.getByText('4.5 / 5')).toBeInTheDocument();
-        expect(screen.getByText('Based on 5 reviews')).toBeInTheDocument();
+        assert.ok(screen.getByText('4.5'));
+        assert.ok(screen.getByText('4.5 / 5'));
+        assert.ok(screen.getByText('Based on 5 reviews'));
 
         // Check for red segments (bg-red)
         const redSegments = container.getElementsByClassName('bg-red');
-        expect(redSegments.length).toBeGreaterThan(0);
+        assert.ok(redSegments.length > 0);
     });
 
     it('renders medium difficulty (orange state) metrics correctly', () => {
@@ -65,7 +67,7 @@ describe('CourseScorecard Component', () => {
 
         // Check for orange segments (bg-orange)
         const orangeSegments = container.getElementsByClassName('bg-orange');
-        expect(orangeSegments.length).toBeGreaterThan(0);
+        assert.ok(orangeSegments.length > 0);
     });
 
     it('renders low difficulty (yellow state) metrics correctly', () => {
@@ -81,6 +83,6 @@ describe('CourseScorecard Component', () => {
 
         // Check for yellow segments (bg-yellow) in difficulty section
         const yellowSegments = container.getElementsByClassName('bg-yellow');
-        expect(yellowSegments.length).toBeGreaterThan(0);
+        assert.ok(yellowSegments.length > 0);
     });
 });
