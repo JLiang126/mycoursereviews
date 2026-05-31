@@ -164,6 +164,7 @@ export const ReviewFeedCard = ({
                                             onClick={() => onReviewEdit(review)}
                                             className="text-yellow hover:scale-105 font-extrabold cursor-pointer uppercase text-[9px] flex items-center gap-1 transition-all"
                                             title="Edit Review"
+                                            aria-label="Edit Review"
                                         >
                                             <FaEdit className="w-3 h-3 text-black dark:text-yellow" />
                                             <span>Edit</span>
@@ -173,6 +174,7 @@ export const ReviewFeedCard = ({
                                             onClick={handleReviewDeleteClick}
                                             className="text-red hover:scale-105 font-extrabold cursor-pointer uppercase text-[9px] flex items-center gap-1 transition-all"
                                             title="Delete Review"
+                                            aria-label="Delete Review"
                                         >
                                             <FaTrashAlt className="w-3 h-3 text-red-500" />
                                             <span>Delete</span>

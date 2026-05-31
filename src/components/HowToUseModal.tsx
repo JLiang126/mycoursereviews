@@ -44,6 +44,7 @@ export const HowToUseModal = ({ isOpen, onClose }: HowToUseModalProps) => {
                             </div>
                             <button
                                 onClick={onClose}
+                                aria-label="Close Guide"
                                 className="cursor-pointer h-7 w-7 border-2 border-foreground bg-background text-foreground hover:bg-secondary hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] flex items-center justify-center font-mono font-black text-sm rounded-none transition-all duration-200"
                             >
                                 ✕

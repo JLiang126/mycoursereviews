@@ -16,14 +16,14 @@ import {
 } from 'react-icons/fa';
 
 const SOCIAL_LINKS = [
-    { icon: FaEnvelope, link: 'mailto:dev@csclub.org.au' },
-    { icon: FaGithub, link: 'https://github.com/compsci-adl' },
-    { icon: FaInstagram, link: 'https://www.instagram.com/csclub.adl/' },
-    { icon: FaTiktok, link: 'https://www.tiktok.com/@csclub.adl/' },
-    { icon: FaFacebook, link: 'https://www.facebook.com/compsci.adl/' },
-    { icon: FaDiscord, link: 'https://discord.gg/UjvVxHA' },
-    { icon: FaLinkedin, link: 'https://www.linkedin.com/company/compsci-adl/' },
-    { icon: FaYoutube, link: 'https://www.youtube.com/@csclub-adl/' },
+    { icon: FaEnvelope, link: 'mailto:dev@csclub.org.au', name: 'Email Support' },
+    { icon: FaGithub, link: 'https://github.com/compsci-adl', name: 'GitHub' },
+    { icon: FaInstagram, link: 'https://www.instagram.com/csclub.adl/', name: 'Instagram' },
+    { icon: FaTiktok, link: 'https://www.tiktok.com/@csclub.adl/', name: 'TikTok' },
+    { icon: FaFacebook, link: 'https://www.facebook.com/compsci.adl/', name: 'Facebook' },
+    { icon: FaDiscord, link: 'https://discord.gg/UjvVxHA', name: 'Discord' },
+    { icon: FaLinkedin, link: 'https://www.linkedin.com/company/compsci-adl/', name: 'LinkedIn' },
+    { icon: FaYoutube, link: 'https://www.youtube.com/@csclub-adl/', name: 'YouTube' },
 ];
 
 const FOOTER_SECTIONS = [
@@ -89,13 +89,14 @@ export const Footer = () => {
                 {/* Course information tab sections */}
                 <div className="mt-0 flex flex-wrap gap-4 justify-self-end mobile:justify-self-auto">
                     {FOOTER_SECTIONS.map((section, i) => (
-                        <h3
+                        <button
                             key={i}
-                            className={`cursor-pointer font-mono text-xs uppercase tracking-wide font-black border-2 border-foreground px-2 py-1 shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff] hover:scale-105 active:scale-95 transition-all ${section.bgClass}`}
+                            className={`cursor-pointer font-mono text-xs uppercase tracking-wide font-black border-2 border-foreground px-2 py-1 shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff] hover:scale-105 active:scale-95 transition-all rounded-none ${section.bgClass}`}
                             onClick={() => setOpenModal(section.title)}
+                            aria-label={`Open ${section.title} modal`}
                         >
                             {section.title}
-                        </h3>
+                        </button>
                     ))}
                 </div>
 
@@ -108,13 +109,14 @@ export const Footer = () => {
 
                 {/* Sticker-style social badges */}
                 <div className="flex flex-wrap gap-3 justify-self-end text-sm mobile:justify-self-auto">
-                    {SOCIAL_LINKS.map(({ icon: Icon, link }, i) => (
+                    {SOCIAL_LINKS.map(({ icon: Icon, link, name }, i) => (
                         <a
                             href={link}
                             key={i}
                             className="p-1.5 border-2 border-foreground rounded-none bg-background text-foreground shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff] hover:bg-yellow hover:text-black hover:rotate-6 hover:-translate-y-0.5 transition-all duration-150"
                             target="_blank"
                             rel="noopener noreferrer"
+                            aria-label={`Visit our ${name}`}
                         >
                             <Icon />
                         </a>

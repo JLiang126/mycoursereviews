@@ -49,7 +49,7 @@ export const CourseScorecard = ({ stats }: CourseScorecardProps) => {
                         <span>DIFFICULTY</span>
                         <span>{stats.totalReviews > 0 ? `${stats.avgDifficulty.toFixed(1)} / 5` : 'N/A'}</span>
                     </div>
-                    <div className="flex gap-0.5 select-none">
+                    <div className="flex gap-0.5 select-none" aria-hidden="true">
                         {Array.from({ length: 10 }).map((_, segmentIdx) => {
                             const threshold = (segmentIdx + 1) / 2;
                             const active = stats.totalReviews > 0 && stats.avgDifficulty >= threshold;
@@ -78,7 +78,7 @@ export const CourseScorecard = ({ stats }: CourseScorecardProps) => {
                         <span>USEFULNESS</span>
                         <span>{stats.totalReviews > 0 ? `${stats.avgUsefulness.toFixed(1)} / 5` : 'N/A'}</span>
                     </div>
-                    <div className="flex gap-0.5 select-none">
+                    <div className="flex gap-0.5 select-none" aria-hidden="true">
                         {Array.from({ length: 10 }).map((_, segmentIdx) => {
                             const threshold = (segmentIdx + 1) / 2;
                             const active = stats.totalReviews > 0 && stats.avgUsefulness >= threshold;
@@ -103,7 +103,7 @@ export const CourseScorecard = ({ stats }: CourseScorecardProps) => {
                         <span>ENJOYMENT</span>
                         <span>{stats.totalReviews > 0 ? `${stats.avgEnjoyment.toFixed(1)} / 5` : 'N/A'}</span>
                     </div>
-                    <div className="flex gap-0.5 select-none">
+                    <div className="flex gap-0.5 select-none" aria-hidden="true">
                         {Array.from({ length: 10 }).map((_, segmentIdx) => {
                             const threshold = (segmentIdx + 1) / 2;
                             const active = stats.totalReviews > 0 && stats.avgEnjoyment >= threshold;
