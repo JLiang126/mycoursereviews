@@ -1,6 +1,6 @@
 services:
-  keycloak:
-    container_name: keycloak
+  mycoursereviews-keycloak:
+    container_name: mycoursereviews-keycloak
     image: quay.io/keycloak/keycloak:26.6.1
     restart: unless-stopped
     healthcheck:
@@ -31,9 +31,9 @@ services:
     networks:
       - csclub
 
-  redis:
+  mycoursereviews-redis:
     image: redis:7-alpine
-    container_name: redis
+    container_name: mycoursereviews-redis
     ports:
       - 6379:6379
     networks:
@@ -52,7 +52,7 @@ services:
       - PGID=1000
       - PORT=3200
       - DATABASE_URL=postgresql://postgres:postgres@mycoursereviews-db-dev:5432/mycoursereviews
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://mycoursereviews-redis:6379
     ports:
       - 3200:3200
     volumes:
@@ -60,7 +60,7 @@ services:
       - /app/node_modules
     depends_on:
       - mycoursereviews-db
-      - redis
+      - mycoursereviews-redis
     command: sh -c "CI=true pnpm install && pnpm run db:push && pnpm run dev"
     networks:
       - csclub
