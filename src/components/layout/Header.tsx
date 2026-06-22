@@ -183,7 +183,7 @@ export const Header = () => {
                 {/* Theme Toggle Button (Desktop-only) */}
                 <NavbarItem className="hidden sm:block">
                     <Tooltip 
-                        content={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'} 
+                        content={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'} 
                         size="sm"
                         radius="none"
                         classNames={{
