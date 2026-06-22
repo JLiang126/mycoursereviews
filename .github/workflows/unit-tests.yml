@@ -25,4 +25,4 @@ jobs:
         run: pnpm install
 
       - name: Run native unit tests
-        run: pnpm run test
+        run: pnpm run test:unit

@@ -12,8 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "test": "node --experimental-test-module-mocks --import tsx --import ./tests/bootstrap.ts --test \"src/**/*.test.ts\" \"src/**/*.test.tsx\"",
-    "test:playwright": "playwright test"
+    "test:unit": "node --experimental-test-module-mocks --import tsx --import ./tests/bootstrap.ts --test \"src/**/*.test.ts\" \"src/**/*.test.tsx\"",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@heroui/button": "^2.2.32",
