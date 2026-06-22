@@ -1,0 +1,54 @@
+services:
+  mycoursereviews:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mycoursereviews:latest
+    container_name: mycoursereviews
+    env_file:
+      - .env.local
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - PORT=3200
+      - DATABASE_URL=postgresql://postgres:postgres@mycoursereviews-db:5432/mycoursereviews
+      - REDIS_URL=redis://mycoursereviews-cache:6379
+    ports:
+      - 3200:3200
+    depends_on:
+      - mycoursereviews-db
+      - mycoursereviews-cache
+    networks:
+      - csclub
+
+  mycoursereviews-db:
+    image: postgres:18-alpine
+    container_name: mycoursereviews-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mycoursereviews
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql
+    networks:
+      - csclub
+
+  mycoursereviews-cache:
+    image: redis:7-alpine
+    container_name: mycoursereviews-cache
+    ports:
+      - 6379:6379
+    volumes:
+      - redisdata:/data
+    networks:
+      - csclub
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  csclub:
+    external: true
