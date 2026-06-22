@@ -30,19 +30,19 @@ const FOOTER_SECTIONS = [
         title: 'About',
         bgClass: 'bg-yellow text-black',
         content:
-            "MyCourseReviews is the Adelaide University Computer Science Club's course outlines and review portal. Built by students, for students, it provides a transparent, secure platform that allows university peers to cast ratings easily on difficulty, usefulness, and enjoyment metrics, helping students explore their study pathways.",
+            "MyCourseReviews is the Adelaide University Computer Science Club's course reviews platform. Built by students, for students, it provides a transparent platform that allows university students to cast ratings easily on difficulty, usefulness, and enjoyment metrics, helping students explore the courses available.",
     },
     {
         title: 'Disclaimer',
         bgClass: 'bg-yellow text-black',
         content:
-            "MyCourseReviews is a student-run repository developed by the Computer Science Club. The club is an independent student organization and does not officially represent the Adelaide University, Faculty, or School. Ratings and reviews express the subjective experiences of individual authors, and course information is subject to change.",
+            "MyCourseReviews is a student-run repository developed by the Computer Science Club. The club is an independent student organisation and does not officially represent the Adelaide University, Faculty, or School. Ratings and reviews express the subjective experiences of individual authors, and course information is subject to change.",
     },
     {
         title: 'Privacy',
         bgClass: 'bg-red text-white',
         content:
-            "MyCourseReviews secures all user logins through the CS Club authentication system. Although reviews can be published anonymously on the public frontend, user Keycloak sub identifiers are safely stored in our database for moderation, accountability, and anti-spam protection. We do not share or trade student identity details.",
+            "MyCourseReviews secures all user logins through the CS Club authentication system. Although reviews can be published anonymously, user ids are safely stored in our database for moderation, accountability, and anti-spam protection. We do not share or trade student identity details.",
     },
     {
         title: 'Terms & Conditions',
