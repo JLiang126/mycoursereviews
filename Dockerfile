@@ -14,7 +14,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 
 # Install project dependencies with frozen lockfile for reproducible builds
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-  corepack enable pnpm && pnpm install --frozen-lockfile
+  npm install -g pnpm@11 && pnpm install --frozen-lockfile
 
 # ============================================
 # Stage 2: Build Next.js application in standalone mode
@@ -39,7 +39,7 @@ ENV SKIP_ENV_VALIDATION=true
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build Next.js application
-RUN corepack enable pnpm && pnpm build
+RUN npm install -g pnpm@11 && pnpm build
 
 # ============================================
 # Stage 3: Run Next.js application
