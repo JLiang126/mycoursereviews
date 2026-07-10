@@ -20,6 +20,8 @@ services:
       - mycoursereviews-cache
     networks:
       - csclub
+    extra_hosts:
+      - "auth.csclub.org.au:host-gateway"
 
   mycoursereviews-db:
     image: postgres:18-alpine
